@@ -14,7 +14,8 @@ interface DetalleEventoProps {
 /**
  * Página de detalle de un evento. Pinta los tres estados que devuelve
  * `getEvento` (la ficha, «no encontrado» y «error») y, arriba, el enlace
- * para volver a la cartelera, que es el mismo en los tres.
+ * para volver a la cartelera, que es el mismo en los tres. Cada estado tiene
+ * su propio `h1` (un solo `h1` por página, también en los estados de error).
  */
 export default function DetalleEvento({ resultado }: DetalleEventoProps) {
   return (
@@ -33,12 +34,17 @@ export default function DetalleEvento({ resultado }: DetalleEventoProps) {
           No encontramos ese evento
         </h1>
       ) : (
-        <p
-          role="alert"
-          className="w-full rounded-xl border border-red-200 bg-red-50 p-6 text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200"
-        >
-          No pudimos cargar el evento. Intenta de nuevo en unos minutos.
-        </p>
+        <div className="flex w-full flex-col gap-4">
+          <h1 className="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
+            No pudimos cargar el evento
+          </h1>
+          <p
+            role="alert"
+            className="w-full rounded-xl border border-red-200 bg-red-50 p-6 text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200"
+          >
+            No pudimos cargar el evento. Intenta de nuevo en unos minutos.
+          </p>
+        </div>
       )}
     </div>
   );
