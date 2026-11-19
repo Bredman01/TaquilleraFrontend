@@ -1,0 +1,73 @@
+import Form from "next/form";
+import { CATEGORIAS, NOMBRE_CATEGORIA, type Filtros } from "@/lib/eventos";
+
+interface FiltrosCarteleraProps {
+  ciudades: string[];
+  filtros: Filtros;
+}
+
+const ETIQUETA = "text-sm font-semibold text-zinc-950 dark:text-zinc-50";
+
+const DESPLEGABLE =
+  "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-base text-zinc-950 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-50 dark:focus-visible:outline-blue-400";
+
+const BOTON_SECUNDARIO =
+  "w-full rounded-lg border border-zinc-300 px-5 py-3 text-base font-semibold text-zinc-950 hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600 dark:border-zinc-600 dark:text-zinc-50 dark:hover:bg-zinc-800 dark:focus-visible:outline-blue-400 sm:w-auto";
+
+/**
+ * Filtros de la cartelera: dos desplegables nativos y un botón «Filtrar».
+ * Al enviarse, `Form` navega a `/?categoria=…&ciudad=…`; un valor vacío es
+ * «Todas». Quien lo use debe darle una `key` armada con los filtros, porque
+ * React no aplica un `defaultValue` nuevo a un `<select>` ya montado.
+ */
+export default function FiltrosCartelera({
+  ciudades,
+  filtros,
+}: FiltrosCarteleraProps) {
+  return (
+    <Form
+      action="/"
+      className="flex flex-col gap-4 sm:flex-row sm:items-end"
+    >
+      <div className="flex flex-col gap-1.5 sm:w-56">
+        <label htmlFor="filtro-categoria" className={ETIQUETA}>
+          Categoría
+        </label>
+        <select
+          id="filtro-categoria"
+          name="categoria"
+          defaultValue={filtros.categoria ?? ""}
+          className={DESPLEGABLE}
+        >
+          <option value="">Todas</option>
+          {CATEGORIAS.map((categoria) => (
+            <option key={categoria} value={categoria}>
+              {NOMBRE_CATEGORIA[categoria]}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="flex flex-col gap-1.5 sm:w-56">
+        <label htmlFor="filtro-ciudad" className={ETIQUETA}>
+          Ciudad
+        </label>
+        <select
+          id="filtro-ciudad"
+          name="ciudad"
+          defaultValue={filtros.ciudad ?? ""}
+          className={DESPLEGABLE}
+        >
+          <option value="">Todas</option>
+          {ciudades.map((ciudad) => (
+            <option key={ciudad} value={ciudad}>
+              {ciudad}
+            </option>
+          ))}
+        </select>
+      </div>
+      <button type="submit" className={BOTON_SECUNDARIO}>
+        Filtrar
+      </button>
+    </Form>
+  );
+}
