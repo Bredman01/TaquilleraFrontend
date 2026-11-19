@@ -136,6 +136,33 @@ describe("leerFiltros", () => {
     // Con la lista vacía ninguna ciudad vale.
     expect(leerFiltros({ ciudad: "Neiva" }, [])).toEqual({});
   });
+
+  it("leerFiltros trata como «Todas» una ciudad repetida", () => {
+    // Sin criterio (decisión del desarrollador, igual que la categoría repetida):
+    // /?ciudad=Neiva&ciudad=Bogotá llega como arreglo, y el backend respondería
+    // 400 («Cada filtro admite un solo valor»), así que no hay ciudad. Aunque
+    // todos los valores sean válidos, o el mismo repetido, la dirección no
+    // elige una ciudad: no se queda con el primero ni con el último.
+    const repetidas: string[][] = [
+      ["Neiva", "Bogotá"],
+      ["Neiva", "Neiva"],
+    ];
+
+    for (const ciudad of repetidas) {
+      expect(
+        leerFiltros({ ciudad }, CIUDADES),
+        `filtros para la ciudad ${JSON.stringify(ciudad)}`,
+      ).toEqual({});
+    }
+
+    // Una ciudad repetida no arrastra la categoría: esa se conserva.
+    expect(
+      leerFiltros(
+        { categoria: "teatro", ciudad: ["Neiva", "Bogotá"] },
+        CIUDADES,
+      ),
+    ).toEqual({ categoria: "teatro" });
+  });
 });
 
 describe("cargarCartelera", () => {
@@ -214,6 +241,29 @@ describe("cargarCartelera", () => {
     });
 
     const resultado = await cargarCartelera({ ciudad: "Narnia" });
+
+    expect(urlsPedidas()).toEqual([
+      `${API_URL}/eventos/ciudades`,
+      `${API_URL}/eventos`,
+    ]);
+    expect(resultado).toEqual({
+      ok: true,
+      eventos: [cartasAMedianoche],
+      ciudades: CIUDADES,
+      filtros: {},
+    });
+  });
+
+  it("cargarCartelera no envía al backend una ciudad repetida", async () => {
+    // Sin criterio (decisión del desarrollador): con /?ciudad=Neiva&ciudad=Bogotá
+    // el backend respondería 400; el frontend nunca envía un arreglo ni un valor
+    // de un filtro repetido, y la cartelera queda en «Todas».
+    simularBackend({
+      ciudades: () => responder(CIUDADES),
+      eventos: () => responder([cartasAMedianoche]),
+    });
+
+    const resultado = await cargarCartelera({ ciudad: ["Neiva", "Bogotá"] });
 
     expect(urlsPedidas()).toEqual([
       `${API_URL}/eventos/ciudades`,
