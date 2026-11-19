@@ -125,6 +125,42 @@ describe("getPelicula", () => {
     await expect(getPelicula("1")).resolves.toEqual(conError);
   });
 
+  it("getPelicula corta la espera del backend a los 5 s", async () => {
+    // D4 / CA-6: un backend colgado no puede dejar la página cargando para
+    // siempre. La prueba no espera 5 s: sustituye AbortSignal.timeout por una
+    // señal que ella controla y comprueba qué se le pidió y qué recibió `fetch`.
+    const corte = new AbortController();
+    const timeoutSpy = vi
+      .spyOn(AbortSignal, "timeout")
+      .mockReturnValue(corte.signal);
+    // Backend colgado: la promesa de `fetch` no se resuelve nunca y solo se
+    // rechaza cuando se aborta la señal que recibió, como hace el `fetch` real.
+    fetchMock.mockImplementation(
+      (_url, init) =>
+        new Promise<Response>((_resolver, rechazar) => {
+          const senal = init?.signal;
+          if (senal) {
+            senal.addEventListener("abort", () => rechazar(senal.reason));
+          }
+        }),
+    );
+
+    const espera = getPelicula("1");
+
+    // Se pidió un corte de 5000 ms y `fetch` recibió exactamente esa señal.
+    expect(timeoutSpy).toHaveBeenCalledTimes(1);
+    expect(timeoutSpy).toHaveBeenCalledWith(5000);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0]?.[1]?.signal).toBe(corte.signal);
+
+    // Vencen los 5 s: la señal se aborta con un TimeoutError, como la real.
+    corte.abort(
+      new DOMException("The operation timed out.", "TimeoutError"),
+    );
+
+    await expect(espera).resolves.toEqual(conError);
+  });
+
   it("getPelicula devuelve error cuando el backend responde 500", async () => {
     fetchMock.mockResolvedValueOnce(
       responder(
@@ -146,6 +182,23 @@ describe("getPelicula", () => {
 
     await expect(getPelicula("4")).resolves.toEqual(conError);
     await expect(getPelicula("6")).resolves.toEqual(conError);
+  });
+
+  it("getPelicula devuelve error cuando la respuesta es un valor que no es objeto", async () => {
+    // Contrato, «200 con un cuerpo que no es objeto → error»: JSON válido, pero
+    // un texto, un número o un booleano en lugar de una película.
+    for (const cuerpo of ["texto", 42, true]) {
+      fetchMock.mockResolvedValueOnce(responder(cuerpo));
+
+      const resultado = await getPelicula("4");
+
+      expect(
+        resultado,
+        `resultado para un 200 con el cuerpo ${JSON.stringify(cuerpo)}`,
+      ).toEqual(conError);
+    }
+
+    expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 
   it("getPelicula no registra console.error cuando la película no existe", async () => {

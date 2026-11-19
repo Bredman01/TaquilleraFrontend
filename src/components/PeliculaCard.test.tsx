@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import PeliculaCard from "@/components/PeliculaCard";
 import type { Pelicula } from "@/lib/peliculas";
@@ -22,5 +22,26 @@ describe("PeliculaCard", () => {
     const enlace = screen.getByRole("link", { name: /Risas en Familia/ });
 
     expect(enlace).toHaveAttribute("href", "/peliculas/3");
+  });
+
+  it("la tarjeta entera es el enlace: contiene el póster, el título, el género y la duración", () => {
+    render(<PeliculaCard pelicula={risasEnFamilia} />);
+
+    const enlace = screen.getByRole("link", { name: /Risas en Familia/ });
+
+    // D9: no basta con enlazar el título; todo lo que se ve de la tarjeta va
+    // dentro del mismo enlace.
+    expect(enlace).toHaveAttribute("href", "/peliculas/3");
+    expect(
+      within(enlace).getByRole("img", { name: "Póster de Risas en Familia" }),
+    ).toBeInTheDocument();
+    expect(
+      within(enlace).getByRole("heading", {
+        level: 3,
+        name: "Risas en Familia",
+      }),
+    ).toBeInTheDocument();
+    expect(within(enlace).getByText(/Comedia/)).toBeInTheDocument();
+    expect(within(enlace).getByText(/1 h 35 min/)).toBeInTheDocument();
   });
 });
