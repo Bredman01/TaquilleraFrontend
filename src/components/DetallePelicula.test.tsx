@@ -76,4 +76,13 @@ describe("DetallePelicula", () => {
     expect(screen.queryByRole("heading", { level: 1 })).not.toBeInTheDocument();
     expect(screen.queryByRole("img")).not.toBeInTheDocument();
   });
+
+  it("si no se pudo cargar también ofrece el enlace «Volver a la cartelera»", () => {
+    // P8 / D7: el enlace de volver aparece en los tres estados, también en el error.
+    render(<DetallePelicula resultado={conError} />);
+
+    expect(
+      screen.getByRole("link", { name: "Volver a la cartelera" }),
+    ).toHaveAttribute("href", "/");
+  });
 });

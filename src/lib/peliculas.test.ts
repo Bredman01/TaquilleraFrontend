@@ -1,4 +1,11 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+  type MockInstance,
+} from "vitest";
 import {
   API_URL,
   getPelicula,
@@ -42,6 +49,7 @@ function responder(cuerpo: unknown, status = 200): Response {
 }
 
 let fetchMock: ReturnType<typeof vi.fn<typeof fetch>>;
+let errorSpy: MockInstance<typeof console.error>;
 
 beforeEach(() => {
   // Ninguna prueba llama al backend real. `unstubGlobals` y `restoreMocks`
@@ -49,7 +57,8 @@ beforeEach(() => {
   fetchMock = vi.fn<typeof fetch>();
   vi.stubGlobal("fetch", fetchMock);
   // Las funciones registran los fallos con console.error; se silencia el ruido.
-  vi.spyOn(console, "error").mockImplementation(() => {});
+  // El espía se guarda para poder comprobar cuándo NO se registra nada (D15).
+  errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 });
 
 describe("getPelicula", () => {
@@ -137,6 +146,31 @@ describe("getPelicula", () => {
 
     await expect(getPelicula("4")).resolves.toEqual(conError);
     await expect(getPelicula("6")).resolves.toEqual(conError);
+  });
+
+  it("getPelicula no registra console.error cuando la película no existe", async () => {
+    // D15: una película inexistente no es un fallo. El verificador-ui bloquea
+    // cualquier línea de registro del frontend que contenga «error».
+    fetchMock.mockResolvedValueOnce(
+      responder(
+        {
+          statusCode: 404,
+          message: "La película 9999 no existe",
+          error: "Not Found",
+        },
+        404,
+      ),
+    );
+
+    // Un 404 del backend: la petición sí se hace y el resultado es «no encontrada».
+    await expect(getPelicula("9999")).resolves.toEqual(noEncontrada);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    // Un id inválido: ni siquiera se llama al backend.
+    await expect(getPelicula("abc")).resolves.toEqual(noEncontrada);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    expect(errorSpy).not.toHaveBeenCalled();
   });
 });
 

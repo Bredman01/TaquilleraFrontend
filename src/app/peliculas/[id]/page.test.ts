@@ -58,4 +58,32 @@ describe("generateMetadata de /peliculas/[id]", () => {
     // Sin película no se define título: la pestaña hereda el del layout (P3).
     expect(metadata.title).toBeUndefined();
   });
+
+  it("generateMetadata hereda el título del layout cuando la película no existe", async () => {
+    // P3 / D10: con un 404 la promesa se resuelve y no se define título.
+    fetchMock.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          statusCode: 404,
+          message: "La película 9999 no existe",
+          error: "Not Found",
+        }),
+        { status: 404, headers: { "Content-Type": "application/json" } },
+      ),
+    );
+
+    const metadata = await generateMetadata(propsDeLaRuta("9999"));
+
+    // Con un id válido sí se pregunta al backend: el 404 es lo que decide.
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(metadata.title).toBeUndefined();
+  });
+
+  it("generateMetadata hereda el título del layout cuando el id no es un entero positivo", async () => {
+    // P3 / D3: un id inválido ni siquiera llega al backend y no define título.
+    const metadata = await generateMetadata(propsDeLaRuta("abc"));
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(metadata.title).toBeUndefined();
+  });
 });
