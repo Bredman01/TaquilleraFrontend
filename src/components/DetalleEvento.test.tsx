@@ -95,9 +95,52 @@ describe("DetalleEvento", () => {
     expect(
       screen.queryByText("No encontramos ese evento"),
     ).not.toBeInTheDocument();
-    expect(screen.queryByRole("heading", { level: 1 })).not.toBeInTheDocument();
     expect(screen.queryByRole("img")).not.toBeInTheDocument();
     expect(screen.queryByRole("term")).not.toBeInTheDocument();
+  });
+
+  it('si no se pudo cargar muestra el encabezado «No pudimos cargar el evento» y debajo el aviso con role="alert"', () => {
+    render(<DetalleEvento resultado={conError} />);
+
+    // Decisión del desarrollador (guía visual: un solo h1 por página, también
+    // en los estados de error). El nombre del h1 es un prefijo del texto del
+    // aviso, así que se busca por rol y con el nombre exacto: `name` con una
+    // cadena exige coincidencia completa.
+    const encabezado = screen.getByRole("heading", {
+      level: 1,
+      name: "No pudimos cargar el evento",
+    });
+    const aviso = screen.getByRole("alert");
+
+    // El aviso conserva el texto completo y exacto de CA-12.
+    expect(aviso).toHaveTextContent(
+      /^No pudimos cargar el evento\. Intenta de nuevo en unos minutos\.$/,
+    );
+    // El aviso y el encabezado son dos elementos distintos: el aviso no es el
+    // h1 ni está dentro de él, ni el h1 dentro del aviso.
+    expect(aviso).not.toBe(encabezado);
+    expect(encabezado).not.toContainElement(aviso);
+    expect(aviso).not.toContainElement(encabezado);
+    // El encabezado va primero y el aviso queda debajo.
+    expect(
+      encabezado.compareDocumentPosition(aviso) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("en los tres estados hay un solo h1", () => {
+    // Regla de la guía visual: un solo h1 por página, también en el error y
+    // en «no encontrado».
+    const { unmount } = render(<DetalleEvento resultado={conEvento} />);
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    unmount();
+
+    const segundo = render(<DetalleEvento resultado={noEncontrado} />);
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    segundo.unmount();
+
+    render(<DetalleEvento resultado={conError} />);
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
   });
 
   it("si no se pudo cargar también ofrece el enlace «Volver a la cartelera»", () => {
