@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import {
   NOMBRE_CATEGORIA,
   type Evento,
@@ -9,6 +10,8 @@ import { formatDuracion } from "@/lib/formato";
 
 interface DetalleEventoProps {
   resultado: ResultadoEvento;
+  /** Lo que va dentro de la sección «Funciones». Solo se pinta con un evento. */
+  funciones?: ReactNode;
 }
 
 /**
@@ -16,8 +19,14 @@ interface DetalleEventoProps {
  * `getEvento` (la ficha, «no encontrado» y «error») y, arriba, el enlace
  * para volver a la cartelera, que es el mismo en los tres. Cada estado tiene
  * su propio `h1` (un solo `h1` por página, también en los estados de error).
+ *
+ * Con un evento, debajo de la ficha va la sección «Funciones» con lo que reciba
+ * `funciones`: la página lo carga aparte, para que la ficha no espere por él.
  */
-export default function DetalleEvento({ resultado }: DetalleEventoProps) {
+export default function DetalleEvento({
+  resultado,
+  funciones,
+}: DetalleEventoProps) {
   return (
     <div className="flex flex-col items-start gap-8">
       <Link
@@ -28,7 +37,21 @@ export default function DetalleEvento({ resultado }: DetalleEventoProps) {
       </Link>
 
       {resultado.ok ? (
-        <Ficha evento={resultado.evento} />
+        <>
+          <Ficha evento={resultado.evento} />
+          <section
+            aria-labelledby="titulo-funciones"
+            className="flex w-full flex-col gap-4"
+          >
+            <h2
+              id="titulo-funciones"
+              className="text-xl font-semibold text-zinc-950 dark:text-zinc-50"
+            >
+              Funciones
+            </h2>
+            {funciones}
+          </section>
+        </>
       ) : resultado.motivo === "no-encontrado" ? (
         <h1 className="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
           No encontramos ese evento
