@@ -62,8 +62,11 @@ export const API_URL =
 /** Un backend que no responde en este tiempo se da por caído. */
 const ESPERA_MAXIMA_MS = 5000;
 
-/** Entero positivo sin ceros a la izquierda: "1" y "42" sí; "0", "01", "1.5", "-1" y "abc" no. */
-const ID_VALIDO = /^[1-9]\d*$/;
+/**
+ * Entero positivo sin ceros a la izquierda: "1" y "42" sí; "0", "01", "1.5", "-1" y "abc" no.
+ * Es la única regla de id del frontend: `getEvento` y `getFuncion` la comparten.
+ */
+export const ID_VALIDO = /^[1-9]\d*$/;
 
 /**
  * Obtiene la lista de eventos desde el backend, con los filtros que lleguen.
