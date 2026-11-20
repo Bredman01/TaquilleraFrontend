@@ -510,6 +510,69 @@ describe("FormularioCompra: la compra aprobada", () => {
     expectSinFormulario();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
+
+  // Spec 006, T10 (CA-12, D15): «Ver mi boleta» en la confirmación.
+  it("con 201 muestra el enlace «Ver mi boleta» a /boletas/{código de la respuesta}, después de los datos, y el foco sigue en «¡Compra aprobada!»", async () => {
+    const verMiBoleta = () =>
+      screen.queryByRole("link", { name: "Ver mi boleta" });
+
+    // Con asientos que ya no están disponibles, la pantalla es otra y no hay
+    // boleta que ver.
+    fetchMock.mockResolvedValueOnce(conflicto(["A2"]));
+    const noDisponibles = montar();
+    pagarConLosDatos();
+
+    await screen.findByRole("alert");
+    expect(
+      screen.getByRole("link", { name: "Elegir otros asientos" }),
+    ).toBeInTheDocument();
+    expect(verMiBoleta()).not.toBeInTheDocument();
+    noDisponibles.unmount();
+
+    // La primera vez el pago falla y la segunda se aprueba. El código de la
+    // respuesta no es el de las otras pruebas ni el de los asientos: el enlace
+    // lleva el que dice la API, no uno fijo.
+    fetchMock
+      .mockRejectedValueOnce(new TypeError("Failed to fetch"))
+      .mockResolvedValueOnce(aprobada({ codigo: "ZX81QW5T" }));
+    montar();
+
+    // Antes de pagar y con el pago que falla, tampoco hay enlace.
+    expect(verMiBoleta()).not.toBeInTheDocument();
+    pagarConLosDatos();
+
+    await screen.findByRole("alert");
+    expectAvisoDeFallo();
+    expect(verMiBoleta()).not.toBeInTheDocument();
+
+    pagar();
+
+    const encabezado = await screen.findByRole("heading", {
+      level: 2,
+      name: APROBADA,
+    });
+    const enlace = screen.getByRole("link", { name: "Ver mi boleta" });
+    expect(enlace).toHaveAttribute("href", "/boletas/ZX81QW5T");
+
+    // Va después de los datos de la compra, y no dentro de la lista: los
+    // términos y las definiciones siguen siendo solo los tres de siempre.
+    const datos = screen.getAllByRole("term")[0].closest("dl");
+    if (datos === null) {
+      throw new Error("los términos de la confirmación no están dentro de un <dl>");
+    }
+    expect(datos).not.toContainElement(enlace);
+    expectAntes(datos, enlace);
+    expect(paresDeLaConfirmacion()).toEqual([
+      ["Código de la compra", "ZX81QW5T"],
+      ["Asientos", "A1, A2"],
+      ["Total", "$ 30.000"],
+    ]);
+
+    // El foco sigue en el encabezado: el enlace es la siguiente parada del Tab,
+    // no el lugar donde cae el foco.
+    await waitFor(() => expect(encabezado).toHaveFocus());
+    expect(enlace).not.toHaveFocus();
+  });
 });
 
 // ---------------------------------------------------------------------------
