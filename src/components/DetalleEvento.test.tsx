@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import DetalleEvento from "@/components/DetalleEvento";
 import type { Evento, ResultadoEvento } from "@/lib/eventos";
@@ -150,5 +150,111 @@ describe("DetalleEvento", () => {
     expect(
       screen.getByRole("link", { name: "Volver a la cartelera" }),
     ).toHaveAttribute("href", "/");
+  });
+});
+
+describe("DetalleEvento con las funciones del evento", () => {
+  // Contenido que las pruebas pasan como `funciones`: solo importa dónde queda.
+  const contenido = <p>Contenido de prueba</p>;
+
+  /** Ni la sección «Funciones» ni su encabezado ni lo que se le pasó. */
+  function expectSinSeccionFunciones() {
+    expect(
+      screen.queryByRole("region", { name: "Funciones" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Funciones" }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Contenido de prueba")).not.toBeInTheDocument();
+  }
+
+  it("la ficha tiene la sección «Funciones» con su encabezado y lo que recibe", () => {
+    render(<DetalleEvento resultado={conEvento} funciones={contenido} />);
+
+    const seccion = screen.getByRole("region", { name: "Funciones" });
+    expect(
+      within(seccion).getByRole("heading", { level: 2, name: "Funciones" }),
+    ).toBeInTheDocument();
+    expect(within(seccion).getByText("Contenido de prueba")).toBeInTheDocument();
+
+    // Los encabezados van en orden: el título de la ficha y después «Funciones».
+    expect(
+      screen
+        .getAllByRole("heading")
+        .map((encabezado) => `${encabezado.tagName}: ${encabezado.textContent}`),
+    ).toEqual(["H1: Cartas a Medianoche", "H2: Funciones"]);
+
+    // La sección queda debajo de la ficha: después del último dato del <dl>.
+    expect(
+      screen
+        .getByText("1 h 30 min")
+        .compareDocumentPosition(seccion) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("si las funciones no se pudieron cargar la ficha se sigue viendo y el aviso queda dentro de la sección «Funciones»", async () => {
+    // Se carga dentro de la prueba y con la ruta en una variable, que Vite no
+    // analiza. Con un `import` normal (arriba o con la ruta escrita en la
+    // llamada), Vite exige que el archivo exista antes de ejecutar nada: mientras
+    // `FuncionesEvento` no exista caerían todas las pruebas de este archivo, y
+    // con esto cae solo esta.
+    const rutaDelComponente = "@/components/FuncionesEvento";
+    const modulo: typeof import("@/components/FuncionesEvento") = await import(
+      /* @vite-ignore */ rutaDelComponente
+    );
+    const FuncionesEvento = modulo.default;
+
+    render(
+      <DetalleEvento
+        resultado={conEvento}
+        funciones={<FuncionesEvento resultado={{ ok: false }} />}
+      />,
+    );
+
+    // CA-10: el resto del detalle se sigue viendo.
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Cartas a Medianoche" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("img", { name: "Afiche de Cartas a Medianoche" }),
+    ).toBeInTheDocument();
+    expect(paresDeLaFicha()).toEqual({
+      Categoría: "Teatro",
+      Ciudad: "Neiva",
+      Lugar: "Teatro Municipal de Neiva",
+      Clasificación: "+13",
+      Duración: "1 h 30 min",
+    });
+
+    // El único aviso de la página es el de las funciones, dentro de su sección.
+    expect(screen.getAllByRole("alert")).toHaveLength(1);
+    const seccion = screen.getByRole("region", { name: "Funciones" });
+    expect(within(seccion).getByRole("alert")).toHaveTextContent(
+      /^No pudimos cargar las funciones\. Intenta de nuevo en unos minutos\.$/,
+    );
+  });
+
+  it("si el evento no existe o no se pudo cargar no muestra la sección «Funciones»", () => {
+    // D14: la sección solo se pinta con evento, aunque se pase `funciones`.
+    // Se parte de un evento que sí la muestra, para que «no aparece» no sea
+    // una comprobación vacía.
+    const { rerender } = render(
+      <DetalleEvento resultado={conEvento} funciones={contenido} />,
+    );
+    expect(
+      screen.getByRole("region", { name: "Funciones" }),
+    ).toBeInTheDocument();
+
+    rerender(<DetalleEvento resultado={noEncontrado} funciones={contenido} />);
+
+    expectSinSeccionFunciones();
+
+    rerender(<DetalleEvento resultado={conError} funciones={contenido} />);
+
+    expectSinSeccionFunciones();
+    // El único aviso es el del evento, no el de unas funciones.
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      /^No pudimos cargar el evento\. Intenta de nuevo en unos minutos\.$/,
+    );
   });
 });
