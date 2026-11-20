@@ -9,8 +9,7 @@ interface FuncionesEventoProps {
 /**
  * Las funciones de un evento, agrupadas por día. Pinta los tres estados de
  * `getFunciones`: el aviso de error, el evento sin funciones y la lista. Cada
- * función es un enlace a `/funciones/{id}`; hasta que exista esa página,
- * pulsarlo lleva al 404 de Next, y por eso el enlace no se precarga.
+ * función es un enlace a `/funciones/{id}`, la página con su mapa de asientos.
  */
 export default function FuncionesEvento({ resultado }: FuncionesEventoProps) {
   if (!resultado.ok) {
@@ -54,7 +53,6 @@ export default function FuncionesEvento({ resultado }: FuncionesEventoProps) {
                   {/* El nombre lleva el día porque el recorrido con Tab lee el nombre del enlace, no el encabezado. */}
                   <Link
                     href={`/funciones/${funcion.id}`}
-                    prefetch={false}
                     aria-label={`${etiqueta}, ${hora}, ${precio}`}
                     className="inline-flex min-h-11 items-center gap-3 rounded-lg border border-zinc-300 px-5 py-3 text-base font-semibold text-zinc-950 hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600 dark:border-zinc-600 dark:text-zinc-50 dark:hover:bg-zinc-800 dark:focus-visible:outline-blue-400"
                   >
