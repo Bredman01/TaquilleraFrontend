@@ -39,7 +39,7 @@ const formatoPrecio = new Intl.NumberFormat(IDIOMA, {
 });
 
 /** ICU separa «$» del número y «p.» de «m.» con U+00A0 o U+202F: se cambian por un espacio normal. */
-const ESPACIOS_ESPECIALES = /[  ]/g;
+const ESPACIOS_ESPECIALES = /[\u00A0\u202F]/g;
 
 function conEspaciosNormales(texto: string): string {
   return texto.replace(ESPACIOS_ESPECIALES, " ");
