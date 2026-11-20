@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import VistaCartelera from "@/components/VistaCartelera";
 import type { ResultadoCartelera } from "@/lib/cartelera";
@@ -131,6 +131,71 @@ describe("VistaCartelera", () => {
     expect(categoria()).toHaveDisplayValue("Todas");
     expect(ciudad()).toHaveValue("");
     expect(ciudad()).toHaveDisplayValue("Todas");
+  });
+
+  it("al cambiar la fecha de la dirección el campo «Fecha» muestra la nueva", () => {
+    // D13: igual que los desplegables, el campo debe reiniciarse cuando cambia
+    // la fecha de la dirección. Un campo que la persona ya editó no sigue a su
+    // `defaultValue`: sin la `key`, después de «Ver todos los eventos» conservaría
+    // el día que eligió.
+    const fecha = () => screen.getByLabelText("Fecha");
+
+    const { rerender } = render(
+      <VistaCartelera
+        resultado={conEventos([elUltimoFaro], { fecha: "2026-11-21" })}
+      />,
+    );
+
+    expect(fecha()).toHaveValue("2026-11-21");
+
+    // Otra dirección: /?fecha=2026-11-22.
+    rerender(
+      <VistaCartelera
+        resultado={conEventos([elUltimoFaro], { fecha: "2026-11-22" })}
+      />,
+    );
+
+    expect(fecha()).toHaveValue("2026-11-22");
+
+    // La persona elige otro día en el campo, sin enviar el formulario, y
+    // después pulsa «Ver todos los eventos»: la portada sin filtros.
+    fireEvent.change(fecha(), { target: { value: "2026-12-01" } });
+    expect(fecha()).toHaveValue("2026-12-01");
+
+    rerender(<VistaCartelera resultado={conEventos([elUltimoFaro], {})} />);
+
+    expect(fecha()).toHaveValue("");
+
+    // Lo mismo con una fecha nueva en la dirección.
+    fireEvent.change(fecha(), { target: { value: "2026-12-01" } });
+
+    rerender(
+      <VistaCartelera
+        resultado={conEventos([elUltimoFaro], { fecha: "2026-11-23" })}
+      />,
+    );
+
+    expect(fecha()).toHaveValue("2026-11-23");
+  });
+
+  it("con solo la fecha y sin eventos muestra «No hay eventos con esos filtros»", () => {
+    // Sin criterio (D13): `hayFiltros` también mira la fecha. /?fecha=2026-11-23
+    // es un día sin funciones: hay un filtro puesto y la salida es quitarlo.
+    render(
+      <VistaCartelera resultado={conEventos([], { fecha: "2026-11-23" })} />,
+    );
+
+    expect(
+      screen.getByText("No hay eventos con esos filtros"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Ver todos los eventos" }),
+    ).toHaveAttribute("href", "/");
+    // No es un fallo del backend y no es una cartelera vacía sin filtros.
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("No hay eventos en cartelera."),
+    ).not.toBeInTheDocument();
   });
 
   it('si no se pudo cargar muestra el aviso con role="alert" y no los filtros', () => {

@@ -1,6 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import DetalleEvento from "@/components/DetalleEvento";
+import FuncionesEvento from "@/components/FuncionesEvento";
 import type { Evento, ResultadoEvento } from "@/lib/eventos";
 
 // Los valores salen del ejemplo de la sección «Contrato» del plan: 90 min se
@@ -192,18 +193,7 @@ describe("DetalleEvento con las funciones del evento", () => {
     ).toBeTruthy();
   });
 
-  it("si las funciones no se pudieron cargar la ficha se sigue viendo y el aviso queda dentro de la sección «Funciones»", async () => {
-    // Se carga dentro de la prueba y con la ruta en una variable, que Vite no
-    // analiza. Con un `import` normal (arriba o con la ruta escrita en la
-    // llamada), Vite exige que el archivo exista antes de ejecutar nada: mientras
-    // `FuncionesEvento` no exista caerían todas las pruebas de este archivo, y
-    // con esto cae solo esta.
-    const rutaDelComponente = "@/components/FuncionesEvento";
-    const modulo: typeof import("@/components/FuncionesEvento") = await import(
-      /* @vite-ignore */ rutaDelComponente
-    );
-    const FuncionesEvento = modulo.default;
-
+  it("si las funciones no se pudieron cargar la ficha se sigue viendo y el aviso queda dentro de la sección «Funciones»", () => {
     render(
       <DetalleEvento
         resultado={conEvento}
