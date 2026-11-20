@@ -253,6 +253,24 @@ describe("getEventos", () => {
     );
   });
 
+  it("getEventos pide la fecha en la consulta junto con los demás filtros", async () => {
+    // CA-11 (D12): la fecha viaja como AAAA-MM-DD y va después de la categoría y
+    // la ciudad, en ese orden; con solo la fecha, es lo único que viaja.
+    fetchMock.mockImplementation(async () => responder([]));
+
+    await getEventos({
+      categoria: "teatro",
+      ciudad: "Bogotá",
+      fecha: "2026-11-21",
+    });
+    await getEventos({ fecha: "2026-11-21" });
+
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+      `${API_URL}/eventos?categoria=teatro&ciudad=Bogot%C3%A1&fecha=2026-11-21`,
+      `${API_URL}/eventos?fecha=2026-11-21`,
+    ]);
+  });
+
   it("getEventos pide solo el filtro que recibe", async () => {
     // CA-3: la lista se filtra por categoría, por ciudad o por las dos a la vez.
     // Un filtro ausente no viaja, ni siquiera vacío.

@@ -63,7 +63,112 @@ function urlsPedidas(): string[] {
   return fetchMock.mock.calls.map(([url]) => String(url));
 }
 
+// Regla de la fecha (D6 y D12), la misma que aplica el backend: exactamente
+// AAAA-MM-DD, con el mes de 01 a 12 y el día de 01 al último del mes, con los
+// bisiestos del calendario gregoriano y sin recortar espacios.
+const FECHAS_VALIDAS = [
+  "2026-11-21",
+  "2026-11-22",
+  "2026-01-31",
+  "2026-02-28",
+  "2026-04-30",
+  "2026-12-31",
+  "2000-02-29", // divisible por 400: bisiesto
+  "2028-02-29", // divisible por 4 y no por 100: bisiesto
+  // Solo febrero cambia en un año bisiesto: los demás meses conservan sus 30 o 31 días.
+  "2028-01-31", // enero de un bisiesto: 31 días
+  "2028-04-30", // abril de un bisiesto: 30 días
+  "2000-12-31", // diciembre de un bisiesto divisible por 400: 31 días
+];
+
+const FECHAS_NO_VALIDAS = [
+  "21-11-2026", // día-mes-año
+  "2026-1-5", // sin ceros
+  "2026-02-30", // febrero no tiene 30 días
+  "2026-02-29", // 2026 no es bisiesto
+  "1900-02-29", // divisible por 100 y no por 400: no es bisiesto
+  "2100-02-29", // ídem
+  "2026-13-01", // mes 13
+  "2026-00-10", // mes 0
+  "2026-11-00", // día 0
+  "2026-04-31", // abril tiene 30 días
+  "2026-11-31", // noviembre tiene 30 días
+  " 2026-11-21", // espacio al principio
+  "2026-11-21 ", // espacio al final
+  "2026-11-21T00:00", // con hora
+  "mañana",
+];
+
+/** Lo que la dirección puede traer en `fecha` y la cartelera trata como «Todas». */
+const FECHAS_QUE_SON_TODAS: Array<string | string[] | undefined> = [
+  ...FECHAS_NO_VALIDAS,
+  "", // lo que envía el formulario con el campo vacío
+  ["2026-11-21", "2026-11-22"], // /?fecha=…&fecha=… llega como arreglo
+  ["2026-11-21", "2026-11-21"],
+  undefined,
+];
+
 describe("leerFiltros", () => {
+  it("leerFiltros toma la fecha de la dirección", () => {
+    // CA-11: /?fecha=2026-11-21, sola.
+    expect(leerFiltros({ fecha: "2026-11-21" }, CIUDADES)).toStrictEqual({
+      fecha: "2026-11-21",
+    });
+
+    // /?categoria=teatro&ciudad=Neiva&fecha=2026-11-22, combinada.
+    expect(
+      leerFiltros(
+        { categoria: "teatro", ciudad: "Neiva", fecha: "2026-11-22" },
+        CIUDADES,
+      ),
+    ).toStrictEqual({
+      categoria: "teatro",
+      ciudad: "Neiva",
+      fecha: "2026-11-22",
+    });
+
+    // Lo que envía el formulario con los dos desplegables en «Todas».
+    expect(
+      leerFiltros({ categoria: "", ciudad: "", fecha: "2026-11-21" }, CIUDADES),
+    ).toStrictEqual({ fecha: "2026-11-21" });
+
+    // La fecha no depende de los otros filtros: vale aunque ellos no valgan.
+    expect(
+      leerFiltros(
+        { categoria: "magia", ciudad: "Narnia", fecha: "2026-11-21" },
+        CIUDADES,
+      ),
+    ).toStrictEqual({ fecha: "2026-11-21" });
+
+    // Cualquier día que existe vale, con los bisiestos incluidos.
+    for (const fecha of FECHAS_VALIDAS) {
+      expect(
+        leerFiltros({ fecha }, CIUDADES),
+        `filtros para la fecha «${fecha}»`,
+      ).toStrictEqual({ fecha });
+    }
+  });
+
+  it("leerFiltros trata como «Todas» una fecha que no es válida, vacía o repetida", () => {
+    // Sin criterio (D12): el backend respondería 400 a una fecha inválida o
+    // repetida, así que la dirección no la lleva al backend: queda en «Todas» y
+    // el resultado no trae la clave `fecha`.
+    for (const fecha of FECHAS_QUE_SON_TODAS) {
+      expect(
+        leerFiltros({ fecha }, CIUDADES),
+        `filtros para la fecha ${JSON.stringify(fecha)}`,
+      ).toStrictEqual({});
+    }
+
+    // Una fecha que no vale no arrastra los otros filtros: esos se conservan.
+    for (const fecha of ["2026-02-30", "", ["2026-11-21", "2026-11-22"]]) {
+      expect(
+        leerFiltros({ categoria: "teatro", ciudad: "Neiva", fecha }, CIUDADES),
+        `filtros para la fecha ${JSON.stringify(fecha)} junto a categoría y ciudad`,
+      ).toStrictEqual({ categoria: "teatro", ciudad: "Neiva" });
+    }
+  });
+
   it("leerFiltros toma la categoría y la ciudad de la dirección", () => {
     // /?categoria=teatro&ciudad=Neiva
     expect(
@@ -183,6 +288,96 @@ describe("cargarCartelera", () => {
       `${API_URL}/eventos?categoria=teatro&ciudad=Neiva`,
     ]);
     expect(resultado).toEqual({
+      ok: true,
+      eventos: [cartasAMedianoche],
+      ciudades: CIUDADES,
+      filtros: { categoria: "teatro", ciudad: "Neiva" },
+    });
+  });
+
+  it("cargarCartelera pide los eventos del día con los demás filtros", async () => {
+    simularBackend({
+      ciudades: () => responder(CIUDADES),
+      eventos: () => responder([cartasAMedianoche]),
+    });
+
+    // CA-11: /?categoria=teatro&ciudad=Neiva&fecha=2026-11-22.
+    const combinada = await cargarCartelera({
+      categoria: "teatro",
+      ciudad: "Neiva",
+      fecha: "2026-11-22",
+    });
+
+    // Primero las ciudades; después los eventos, con la fecha al final.
+    expect(urlsPedidas()).toEqual([
+      `${API_URL}/eventos/ciudades`,
+      `${API_URL}/eventos?categoria=teatro&ciudad=Neiva&fecha=2026-11-22`,
+    ]);
+    expect(combinada).toEqual({
+      ok: true,
+      eventos: [cartasAMedianoche],
+      ciudades: CIUDADES,
+      filtros: { categoria: "teatro", ciudad: "Neiva", fecha: "2026-11-22" },
+    });
+
+    // /?fecha=2026-11-21: con solo la fecha, es lo único que se pide.
+    fetchMock.mockClear();
+    const sola = await cargarCartelera({ fecha: "2026-11-21" });
+
+    expect(urlsPedidas()).toEqual([
+      `${API_URL}/eventos/ciudades`,
+      `${API_URL}/eventos?fecha=2026-11-21`,
+    ]);
+    expect(sola).toEqual({
+      ok: true,
+      eventos: [cartasAMedianoche],
+      ciudades: CIUDADES,
+      filtros: { fecha: "2026-11-21" },
+    });
+  });
+
+  it("cargarCartelera no envía al backend una fecha que no es válida", async () => {
+    // Sin criterio (D12): con una fecha inválida, vacía o repetida el backend
+    // respondería 400 y la cartelera mostraría el aviso de error. El frontend
+    // pide solo `/eventos` y deja la fecha en «Todas».
+    simularBackend({
+      ciudades: () => responder(CIUDADES),
+      eventos: () => responder([cartasAMedianoche]),
+    });
+
+    for (const fecha of FECHAS_QUE_SON_TODAS) {
+      fetchMock.mockClear();
+
+      const resultado = await cargarCartelera({ fecha });
+
+      expect(
+        urlsPedidas(),
+        `peticiones para la fecha ${JSON.stringify(fecha)}`,
+      ).toEqual([`${API_URL}/eventos/ciudades`, `${API_URL}/eventos`]);
+      expect(
+        resultado,
+        `resultado para la fecha ${JSON.stringify(fecha)}`,
+      ).toStrictEqual({
+        ok: true,
+        eventos: [cartasAMedianoche],
+        ciudades: CIUDADES,
+        filtros: {},
+      });
+    }
+
+    // Los otros filtros válidos que llegan con ella sí se envían.
+    fetchMock.mockClear();
+    const conOtros = await cargarCartelera({
+      categoria: "teatro",
+      ciudad: "Neiva",
+      fecha: "2026-02-30",
+    });
+
+    expect(urlsPedidas()).toEqual([
+      `${API_URL}/eventos/ciudades`,
+      `${API_URL}/eventos?categoria=teatro&ciudad=Neiva`,
+    ]);
+    expect(conOtros).toStrictEqual({
       ok: true,
       eventos: [cartasAMedianoche],
       ciudades: CIUDADES,

@@ -41,6 +41,7 @@ Variables de entorno: `NEXT_PUBLIC_API_URL` (URL del backend; si no existe, usar
 - La skill `vercel-react-best-practices` (`.claude/skills/`) aplica al escribir o revisar componentes y carga de datos.
 - Los filtros de la cartelera viajan en la dirección (`/?categoria=teatro&ciudad=Neiva`) y se leen en el servidor con las funciones de `src/lib/cartelera.ts`. Un valor desconocido o repetido cuenta como «Todas»; el formulario es un `<form>` de tipo GET que funciona sin JavaScript.
 - El aspecto de las pantallas sale de la skill `guia-visual` del arnés: no se inventan colores, tamaños ni piezas nuevas sin agregarlas ahí.
+- **Dinero, fechas y horas se formatean solo en `src/lib/formato.ts`** (`formatPrecio`, `formatDia`, `formatHora`, `diaEnColombia`), siempre en hora de Colombia (`America/Bogota`). Las pruebas fuerzan otra zona (`Asia/Tokyo`) antes de importar el código, con `vi.hoisted`. `Intl` escribe espacios no separables en «$ 15.000» y en «p. m.»: `formato.ts` los normaliza, y esa línea se escribe con los escapes `\u00A0\u202F`.
 
 ## Organización del código
 

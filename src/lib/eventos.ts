@@ -37,10 +37,11 @@ export interface Evento {
   imagenUrl: string;
 }
 
-/** Filtros de la cartelera. Un filtro ausente es «Todas». */
+/** Filtros de la cartelera. Un filtro ausente es «Todas». La fecha es `AAAA-MM-DD`. */
 export interface Filtros {
   categoria?: Categoria;
   ciudad?: string;
+  fecha?: string;
 }
 
 export type ResultadoEventos =
@@ -69,13 +70,14 @@ const ID_VALIDO = /^[1-9]\d*$/;
  * Nunca lanza: si la API no responde o la respuesta no es válida devuelve
  * { ok: false } para que la página muestre un mensaje en lugar de romperse.
  *
- * Sin filtros pide `/eventos` sin consulta; con filtros agrega `categoria` y
- * `ciudad`, codificados, y solo los que lleguen.
+ * Sin filtros pide `/eventos` sin consulta; con filtros agrega `categoria`,
+ * `ciudad` y `fecha`, en ese orden y codificados, y solo los que lleguen.
  */
 export async function getEventos(filtros: Filtros): Promise<ResultadoEventos> {
   const consulta = new URLSearchParams();
   if (filtros.categoria) consulta.set("categoria", filtros.categoria);
   if (filtros.ciudad) consulta.set("ciudad", filtros.ciudad);
+  if (filtros.fecha) consulta.set("fecha", filtros.fecha);
   const texto = consulta.toString();
   const ruta = texto ? `/eventos?${texto}` : "/eventos";
 
