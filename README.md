@@ -28,7 +28,12 @@ Si el backend está en otra dirección, se indica con `NEXT_PUBLIC_API_URL` en `
 | `/` | La cartelera, con filtros por categoría, ciudad y fecha (`/?categoria=teatro&ciudad=Neiva&fecha=2026-11-21`) |
 | `/eventos/{id}` | El detalle de un evento, con sus funciones agrupadas por día |
 | `/funciones/{id}` | Los datos de la función y el mapa de asientos, con la selección y el total |
-| `/funciones/{id}/compra?asientos=A1,A2` | El resumen de la compra y el formulario de pago simulado, con la confirmación y su código |
+| `/funciones/{id}/compra?asientos=A1,A2` | El resumen de la compra y el formulario de pago simulado, con la confirmación, su código y el enlace «Ver mi boleta» |
+| `/boletas/{codigo}` | La boleta: los datos de la compra, su código QR, su estado («Válida» o «Usada») y el botón «Validar ingreso» |
+
+El encabezado de todas las páginas tiene el formulario «Consultar boleta», que lleva a la boleta de un código.
+
+**Límite conocido de la boleta.** El código QR lleva la dirección desde la que se abrió la página, así que también sirve si el sitio se abre por la dirección de red del equipo. «Validar ingreso», en cambio, llama a la API desde el navegador: con el valor por defecto (`http://localhost:3001`) solo funciona en el mismo equipo. Validar desde otro dispositivo exigiría servir la API en una dirección que ese dispositivo alcance e indicarla en `NEXT_PUBLIC_API_URL`. Ninguna spec lo pide y no lo probamos.
 
 ## Comandos
 
@@ -85,3 +90,4 @@ El orden completo, los permisos de cada agente y lo que cambió respecto del dis
 | [003 · Funciones por evento](https://github.com/AbilsonRivera/Taquillera-Arnes/blob/main/specs/003-funciones-por-evento/spec.md) | [#6](https://github.com/Bredman01/TaquilleraFrontend/pull/6) |
 | [004 · Mapa de asientos](https://github.com/AbilsonRivera/Taquillera-Arnes/blob/main/specs/004-mapa-de-asientos/spec.md) | [#7](https://github.com/Bredman01/TaquilleraFrontend/pull/7) |
 | [005 · Compra con pago simulado](https://github.com/AbilsonRivera/Taquillera-Arnes/blob/main/specs/005-compra-pago-simulado/spec.md) | [#8](https://github.com/Bredman01/TaquilleraFrontend/pull/8) |
+| [006 · Boleta con código QR y validación](https://github.com/AbilsonRivera/Taquillera-Arnes/blob/main/specs/006-boleta-por-codigo/spec.md) | [#9](https://github.com/Bredman01/TaquilleraFrontend/pull/9) |
