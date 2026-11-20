@@ -424,6 +424,103 @@ describe("getBoleta", () => {
     expect(errorSpy).toHaveBeenCalled();
   });
 
+  it("getBoleta devuelve error y lo registra si inicio o fechaUso no son fechas que Date.parse entienda", async () => {
+    // CA-1, aclara D11. `formatDia` y `formatHora` lanzarían con una fecha que
+    // `Date.parse` no entiende y tumbarían la página: se rechaza aquí, en la
+    // lectura, como hacen `getFuncion` con `inicio` y `comprar` con `fecha`.
+    // [descripción, campo, boleta de la que parte, texto ilegible]. La boleta
+    // solo falla en esa fecha: lo demás es válido.
+    const ilegibles: Array<[string, "inicio" | "fechaUso", Boleta, string]> = [
+      ["un inicio vacío", "inicio", BOLETA_VALIDA, ""],
+      [
+        "un inicio que no es una fecha",
+        "inicio",
+        BOLETA_VALIDA,
+        "no es una fecha",
+      ],
+      [
+        "un inicio con el formato ISO pero con el mes 13, el día 45 y la hora 25",
+        "inicio",
+        BOLETA_VALIDA,
+        "2026-13-45T25:00:00-05:00",
+      ],
+      [
+        "una boleta usada con una fecha de uso que no es una fecha",
+        "fechaUso",
+        BOLETA_USADA,
+        "no es una fecha",
+      ],
+      [
+        // Con el formato ISO, pero fuera de rango: `Date.parse` da NaN.
+        "una boleta usada con una fecha de uso con el mes 13, el día 45 y la hora 25",
+        "fechaUso",
+        BOLETA_USADA,
+        "2026-13-45T25:61:61-05:00",
+      ],
+    ];
+
+    for (const [descripcion, campo, base, texto] of ilegibles) {
+      // La premisa de la prueba: ese texto es de los que `Date.parse` no entiende.
+      expect(Date.parse(texto), `Date.parse(«${texto}»)`).toBeNaN();
+      errorSpy.mockClear();
+      fetchMock.mockResolvedValueOnce(responder(conCampo(base, campo, texto)));
+
+      // `resolves`: la promesa se resuelve con el error. Nunca se rechaza.
+      await expect(getBoleta("K7Q2M9XA"), descripcion).resolves.toStrictEqual(
+        ERROR,
+      );
+      expect(errorSpy, `registro cuando hay ${descripcion}`).toHaveBeenCalled();
+    }
+
+    expect(fetchMock).toHaveBeenCalledTimes(ilegibles.length);
+
+    // El caso contrario: con fechas ISO con -05:00 que `Date.parse` sí entiende
+    // la boleta pasa tal como llega, válida o usada. Así no sirve una
+    // implementación que rechace todas las boletas.
+    const inicioOtroDia = "2026-12-05T19:30:00-05:00";
+    const usoOtroDia = "2026-12-05T19:02:41-05:00";
+    expect(Date.parse(inicioOtroDia)).not.toBeNaN();
+    expect(Date.parse(usoOtroDia)).not.toBeNaN();
+    const validaOtroDia: Boleta = {
+      codigo: "K7Q2M9XA",
+      titulo: "El Último Faro",
+      inicio: inicioOtroDia,
+      lugar: "Cine Club La Gaitana",
+      ciudad: "Neiva",
+      asientos: ["D1", "D2"],
+      nombre: "Ana Pérez",
+      estado: "valida",
+      fechaUso: null,
+    };
+    const usadaOtroDia: Boleta = {
+      codigo: "K7Q2M9XA",
+      titulo: "El Último Faro",
+      inicio: inicioOtroDia,
+      lugar: "Cine Club La Gaitana",
+      ciudad: "Neiva",
+      asientos: ["D1", "D2"],
+      nombre: "Ana Pérez",
+      estado: "usada",
+      fechaUso: usoOtroDia,
+    };
+    errorSpy.mockClear();
+
+    fetchMock.mockResolvedValueOnce(responder(validaOtroDia));
+    await expect(getBoleta("K7Q2M9XA")).resolves.toStrictEqual({
+      ok: true,
+      boleta: validaOtroDia,
+    });
+
+    fetchMock.mockResolvedValueOnce(responder(usadaOtroDia));
+    await expect(getBoleta("K7Q2M9XA")).resolves.toStrictEqual({
+      ok: true,
+      boleta: usadaOtroDia,
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(ilegibles.length + 2);
+    expect(errorSpy).not.toHaveBeenCalled();
+  });
+
   it("getBoleta envía el código tal como llega, codificado: en minúsculas y con caracteres especiales", async () => {
     // [lo que llega, lo que va en la dirección]. Los códigos codificados están
     // escritos a mano: la prueba no usa `encodeURIComponent` para decidir qué esperar.
@@ -632,6 +729,41 @@ describe("origenDeLaPeticion", () => {
         origenDeLaPeticion(new Headers(cabeceras)),
         `origen con ${descripcion}`,
       ).toBeNull();
+    }
+  });
+
+  it("origenDeLaPeticion usa solo el primer valor de x-forwarded-host: si ese no cumple, pasa a host y no a un segundo valor", () => {
+    // CA-7, aclara D10. Solo cuenta lo que está antes de la primera coma, sin los
+    // espacios de alrededor. Si ese primer valor no es un host válido, la regla es
+    // la de siempre: se pasa a `host`. No se busca un segundo valor en la lista,
+    // porque quien manda la cabecera podría poner ahí lo que quisiera.
+    const casos: Array<[string, Record<string, string>, string | null]> = [
+      [
+        // El primero no cumple (lleva una ruta): gana `host`, no «otro.example».
+        "el primer valor con una ruta y un segundo valor válido, con host",
+        { "x-forwarded-host": "a/b, otro.example", host: "localhost:3000" },
+        "http://localhost:3000",
+      ],
+      [
+        // Los espacios alrededor del primer valor no cuentan.
+        "el primer valor con espacios alrededor y un segundo valor",
+        { "x-forwarded-host": " taquillera.example , otro.example" },
+        "http://taquillera.example",
+      ],
+      [
+        // El primero no cumple (lleva un espacio dentro) y no hay `host`: no hay
+        // origen, aunque el segundo valor sea válido.
+        "el primer valor con un espacio dentro, un segundo valor válido y sin host",
+        { "x-forwarded-host": "a b, otro.example" },
+        null,
+      ],
+    ];
+
+    for (const [descripcion, cabeceras, esperado] of casos) {
+      expect(
+        origenDeLaPeticion(new Headers(cabeceras)),
+        `origen con ${descripcion}`,
+      ).toBe(esperado);
     }
   });
 });
