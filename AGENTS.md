@@ -41,6 +41,8 @@ Variables de entorno: `NEXT_PUBLIC_API_URL` (URL del backend; si no existe, usar
 - La skill `vercel-react-best-practices` (`.claude/skills/`) aplica al escribir o revisar componentes y carga de datos.
 - Los filtros de la cartelera viajan en la dirección (`/?categoria=teatro&ciudad=Neiva`) y se leen en el servidor con las funciones de `src/lib/cartelera.ts`. Un valor desconocido o repetido cuenta como «Todas»; el formulario es un `<form>` de tipo GET que funciona sin JavaScript.
 - El aspecto de las pantallas sale de la skill `guia-visual` del arnés: no se inventan colores, tamaños ni piezas nuevas sin agregarlas ahí.
+- **Un componente de cliente solo pinta y avisa.** `MapaAsientos` es el único con `'use client'`; la lógica de la selección (el tope de 6, el orden y la dirección de «Continuar») vive en `src/lib/mapa.ts`, sin `'use client'`, para que Vitest la pruebe sin navegador. Lo mismo vale para cualquier componente de cliente nuevo.
+- Al navegar, Next escribe la coma de `?asientos=A1,A2` como `%2C`. Las páginas leen `searchParams` ya decodificado.
 - **Dinero, fechas y horas se formatean solo en `src/lib/formato.ts`** (`formatPrecio`, `formatDia`, `formatHora`, `diaEnColombia`), siempre en hora de Colombia (`America/Bogota`). Las pruebas fuerzan otra zona (`Asia/Tokyo`) antes de importar el código, con `vi.hoisted`. `Intl` escribe espacios no separables en «$ 15.000» y en «p. m.»: `formato.ts` los normaliza, y esa línea se escribe con los escapes `\u00A0\u202F`.
 
 ## Organización del código
