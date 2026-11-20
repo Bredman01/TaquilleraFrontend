@@ -18,6 +18,7 @@ import {
   type ErroresComprador,
 } from "@/lib/compras";
 import { formatPrecio } from "@/lib/formato";
+import { rutaDeBoleta } from "@/lib/ingreso";
 
 interface FormularioCompraProps {
   funcionId: number;
@@ -146,6 +147,12 @@ export default function FormularioCompra({
           <Dato termino="Asientos" valor={compra.asientos.join(", ")} />
           <Dato termino="Total" valor={formatPrecio(compra.total)} />
         </dl>
+        <Link
+          href={rutaDeBoleta(compra.codigo)}
+          className={`${ENLACE_COMO_BOTON} self-start`}
+        >
+          Ver mi boleta
+        </Link>
       </div>
     );
   }
