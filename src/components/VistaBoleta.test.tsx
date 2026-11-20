@@ -130,7 +130,7 @@ function expectEnlaceDeArriba() {
   return enlace;
 }
 
-/** Ni la lista de datos, ni el estado, ni el QR, ni el botón de validar. */
+/** Ni la lista de datos, ni el título de ingreso, ni el QR, ni el botón de validar. */
 function expectSinBoleta() {
   expect(screen.queryByRole("term")).not.toBeInTheDocument();
   expect(screen.queryByRole("img")).not.toBeInTheDocument();
@@ -138,8 +138,9 @@ function expectSinBoleta() {
   expect(
     screen.queryByRole("heading", { name: "Tu boleta" }),
   ).not.toBeInTheDocument();
+  // El título de la sección de ingreso (B4): sin boleta no hay ninguno.
   expect(
-    screen.queryByRole("heading", { name: "Estado" }),
+    screen.queryByRole("heading", { name: "Ingreso" }),
   ).not.toBeInTheDocument();
 }
 
@@ -321,9 +322,14 @@ describe("VistaBoleta con la boleta", () => {
       />,
     );
 
+    // El título de la sección es «Ingreso» (B4); «Estado» es solo el término de la
+    // lista, que no es un encabezado.
     expect(
-      screen.getByRole("heading", { level: 2, name: "Estado" }),
+      screen.getByRole("heading", { level: 2, name: "Ingreso" }),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Estado" }),
+    ).not.toBeInTheDocument();
     expect(paresDeLaPagina().slice(-3)).toEqual([
       ["Estado", "Usada"],
       ["Día de uso", "domingo, 22 de noviembre"],
@@ -344,6 +350,13 @@ describe("VistaBoleta con la boleta", () => {
       />,
     );
 
+    // También con una boleta válida: el título es «Ingreso», no «Estado».
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Ingreso" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Estado" }),
+    ).not.toBeInTheDocument();
     expect(paresDeLaPagina().slice(-1)).toEqual([ESTADO_VALIDA]);
     expect(screen.queryByText("Día de uso")).not.toBeInTheDocument();
     expect(screen.queryByText("Hora de uso")).not.toBeInTheDocument();

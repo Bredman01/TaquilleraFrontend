@@ -766,4 +766,254 @@ describe("origenDeLaPeticion", () => {
       ).toBe(esperado);
     }
   });
+
+  // -------------------------------------------------------------------------
+  // El tope del nombre del host (CA-7, D10; M2 de la revisión)
+  // -------------------------------------------------------------------------
+  //
+  // El nombre del host, sin contar el puerto, admite como máximo 253 caracteres,
+  // que es el máximo de un nombre de dominio: con 254 no es válido. Vale igual
+  // para `x-forwarded-host` y para `host`. Sin ese tope, un host de unos 2300
+  // caracteres hace que `qr.make()` lance «code length overflow» al dibujar el QR
+  // y la página da error.
+  //
+  // Los nombres se arman con etiquetas de 63 caracteres separadas por puntos:
+  // tres etiquetas de 63 y una última de 61 suman 253 con los puntos; con una
+  // última de 62, suman 254.
+
+  /** Tres etiquetas de 63 caracteres y una última de `ultima`, unidas con puntos. */
+  function nombreDeHost(letra: string, ultima: number): string {
+    const etiqueta = letra.repeat(63);
+    return [etiqueta, etiqueta, etiqueta, letra.repeat(ultima)].join(".");
+  }
+
+  const HOST_253 = nombreDeHost("a", 61);
+  const HOST_254 = nombreDeHost("a", 62);
+  const OTRO_HOST_253 = nombreDeHost("c", 61);
+  const OTRO_HOST_254 = nombreDeHost("d", 62);
+
+  it("origenDeLaPeticion admite un nombre de host de hasta 253 caracteres y descarta uno de 254, en x-forwarded-host y en host", () => {
+    expect(HOST_253).toHaveLength(253);
+    expect(HOST_254).toHaveLength(254);
+
+    const casos: Array<[string, Record<string, string>, string | null]> = [
+      [
+        "x-forwarded-host de 253 caracteres",
+        { "x-forwarded-host": HOST_253 },
+        `http://${HOST_253}`,
+      ],
+      [
+        // Sin otro host al que pasar: el de 254 no sirve y no hay origen.
+        "x-forwarded-host de 254 caracteres y sin host",
+        { "x-forwarded-host": HOST_254 },
+        null,
+      ],
+      [
+        // Los espacios de alrededor no cuentan para el largo: el primer valor se
+        // recorta antes de medirlo.
+        "x-forwarded-host de 253 caracteres con un espacio antes de la coma de la lista",
+        { "x-forwarded-host": `${HOST_253} , otro.example` },
+        `http://${HOST_253}`,
+      ],
+      ["host de 253 caracteres", { host: HOST_253 }, `http://${HOST_253}`],
+      ["host de 254 caracteres", { host: HOST_254 }, null],
+    ];
+
+    for (const [descripcion, cabeceras, esperado] of casos) {
+      expect(
+        origenDeLaPeticion(new Headers(cabeceras)),
+        `origen con ${descripcion}`,
+      ).toBe(esperado);
+    }
+  });
+
+  it("origenDeLaPeticion no cuenta el puerto en el tope: 253 caracteres con un puerto son válidos y 254 con un puerto no, en x-forwarded-host y en host", () => {
+    expect(HOST_253).toHaveLength(253);
+    expect(HOST_254).toHaveLength(254);
+
+    const casos: Array<[string, Record<string, string>, string | null]> = [
+      [
+        "x-forwarded-host de 253 caracteres con :3000",
+        { "x-forwarded-host": `${HOST_253}:3000` },
+        `http://${HOST_253}:3000`,
+      ],
+      [
+        // 253 + «:65535» son 259 caracteres en total: solo el nombre está topado.
+        "x-forwarded-host de 253 caracteres con :65535",
+        { "x-forwarded-host": `${HOST_253}:65535` },
+        `http://${HOST_253}:65535`,
+      ],
+      [
+        "x-forwarded-host de 254 caracteres con :3000",
+        { "x-forwarded-host": `${HOST_254}:3000` },
+        null,
+      ],
+      [
+        "host de 253 caracteres con :3000",
+        { host: `${HOST_253}:3000` },
+        `http://${HOST_253}:3000`,
+      ],
+      [
+        "host de 253 caracteres con :65535",
+        { host: `${HOST_253}:65535` },
+        `http://${HOST_253}:65535`,
+      ],
+      ["host de 254 caracteres con :3000", { host: `${HOST_254}:3000` }, null],
+    ];
+
+    for (const [descripcion, cabeceras, esperado] of casos) {
+      expect(
+        origenDeLaPeticion(new Headers(cabeceras)),
+        `origen con ${descripcion}`,
+      ).toBe(esperado);
+    }
+  });
+
+  it("origenDeLaPeticion descarta un host entre corchetes de 300 caracteres y sigue admitiendo una IPv6 normal", () => {
+    // 300 caracteres hexadecimales entre corchetes: pasaría la expresión de
+    // siempre, pero ninguna IPv6 es tan larga y haría fallar el QR.
+    const hexadecimal = "ab12".repeat(75);
+    expect(hexadecimal).toHaveLength(300);
+
+    const casos: Array<[string, Record<string, string>, string | null]> = [
+      [
+        "host con 300 caracteres hexadecimales entre corchetes",
+        { host: `[${hexadecimal}]` },
+        null,
+      ],
+      [
+        "host con 300 caracteres hexadecimales entre corchetes y :3000",
+        { host: `[${hexadecimal}]:3000` },
+        null,
+      ],
+      [
+        "x-forwarded-host con 300 caracteres hexadecimales entre corchetes y sin host",
+        { "x-forwarded-host": `[${hexadecimal}]` },
+        null,
+      ],
+      [
+        "x-forwarded-host con 300 caracteres hexadecimales entre corchetes y un host válido",
+        { "x-forwarded-host": `[${hexadecimal}]`, host: "localhost:3000" },
+        "http://localhost:3000",
+      ],
+      // Las IPv6 de verdad, con su puerto, siguen valiendo.
+      ["host [::1]:3000", { host: "[::1]:3000" }, "http://[::1]:3000"],
+      [
+        "host [2001:db8::1]:3000",
+        { host: "[2001:db8::1]:3000" },
+        "http://[2001:db8::1]:3000",
+      ],
+      [
+        "x-forwarded-host [2001:db8::1]:3000 con otro host",
+        { "x-forwarded-host": "[2001:db8::1]:3000", host: "localhost:3000" },
+        "http://[2001:db8::1]:3000",
+      ],
+    ];
+
+    for (const [descripcion, cabeceras, esperado] of casos) {
+      expect(
+        origenDeLaPeticion(new Headers(cabeceras)),
+        `origen con ${descripcion}`,
+      ).toBe(esperado);
+    }
+  });
+
+  it("origenDeLaPeticion pasa a host si el x-forwarded-host es demasiado largo, y devuelve null si los dos lo son", () => {
+    expect(HOST_253).toHaveLength(253);
+    expect(HOST_254).toHaveLength(254);
+    expect(OTRO_HOST_253).toHaveLength(253);
+    expect(OTRO_HOST_254).toHaveLength(254);
+
+    const casos: Array<[string, Record<string, string>, string | null]> = [
+      [
+        "x-forwarded-host de 254 caracteres y host válido",
+        { "x-forwarded-host": HOST_254, host: "localhost:3000" },
+        "http://localhost:3000",
+      ],
+      [
+        "x-forwarded-host de 254 caracteres y host de 253",
+        { "x-forwarded-host": HOST_254, host: OTRO_HOST_253 },
+        `http://${OTRO_HOST_253}`,
+      ],
+      [
+        // El protocolo se lee aparte: no se pierde al pasar a `host`.
+        "x-forwarded-host de 254 caracteres, x-forwarded-proto https y host válido",
+        {
+          "x-forwarded-proto": "https",
+          "x-forwarded-host": HOST_254,
+          host: "localhost:3000",
+        },
+        "https://localhost:3000",
+      ],
+      [
+        "x-forwarded-host y host de 254 caracteres",
+        { "x-forwarded-host": HOST_254, host: OTRO_HOST_254 },
+        null,
+      ],
+      [
+        // D10: solo cuenta el primer valor. Si no sirve, se pasa a `host`; el
+        // segundo valor, aunque sea válido, no se toma.
+        "x-forwarded-host de 254 caracteres seguido de otro valor válido, con host",
+        {
+          "x-forwarded-host": `${HOST_254}, otro.example`,
+          host: "localhost:3000",
+        },
+        "http://localhost:3000",
+      ],
+      [
+        "x-forwarded-host de 254 caracteres seguido de otro valor válido, sin host",
+        { "x-forwarded-host": `${HOST_254}, otro.example` },
+        null,
+      ],
+      [
+        // Si el primero sirve, el `host` de 254 no se mira.
+        "x-forwarded-host de 253 caracteres y host de 254",
+        { "x-forwarded-host": HOST_253, host: OTRO_HOST_254 },
+        `http://${HOST_253}`,
+      ],
+    ];
+
+    for (const [descripcion, cabeceras, esperado] of casos) {
+      expect(
+        origenDeLaPeticion(new Headers(cabeceras)),
+        `origen con ${descripcion}`,
+      ).toBe(esperado);
+    }
+  });
+
+  it("origenDeLaPeticion conserva el protocolo de x-forwarded-proto con un x-forwarded-host de 253 caracteres", () => {
+    // Protección de lo que ya funciona: el tope no toca el protocolo.
+    expect(HOST_253).toHaveLength(253);
+
+    const casos: Array<[string, Record<string, string>, string | null]> = [
+      [
+        "x-forwarded-proto https",
+        { "x-forwarded-proto": "https", "x-forwarded-host": HOST_253 },
+        `https://${HOST_253}`,
+      ],
+      [
+        "x-forwarded-proto https y un puerto",
+        {
+          "x-forwarded-proto": "https",
+          "x-forwarded-host": `${HOST_253}:8443`,
+        },
+        `https://${HOST_253}:8443`,
+      ],
+      [
+        "listas con varios valores: el primero de cada una",
+        {
+          "x-forwarded-proto": "https, http",
+          "x-forwarded-host": `${HOST_253}, otro.example`,
+        },
+        `https://${HOST_253}`,
+      ],
+    ];
+
+    for (const [descripcion, cabeceras, esperado] of casos) {
+      expect(
+        origenDeLaPeticion(new Headers(cabeceras)),
+        `origen con ${descripcion}`,
+      ).toBe(esperado);
+    }
+  });
 });

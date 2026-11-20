@@ -220,9 +220,14 @@ describe("IngresoBoleta: el estado que dicen las props", () => {
   it("una boleta válida muestra «Válida» y el botón «Validar ingreso»", () => {
     montar();
 
+    // El título de la sección es «Ingreso» (B4); «Estado» es solo el término de la
+    // lista, que no es un encabezado.
     expect(
-      screen.getByRole("heading", { level: 2, name: "Estado" }),
+      screen.getByRole("heading", { level: 2, name: "Ingreso" }),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Estado" }),
+    ).not.toBeInTheDocument();
     // Solo el estado: una boleta válida no tiene día ni hora de uso.
     expect(paresDelEstado()).toEqual(PARES_DE_UNA_BOLETA_VALIDA);
     expect(screen.queryByText("Día de uso")).not.toBeInTheDocument();
@@ -238,8 +243,11 @@ describe("IngresoBoleta: el estado que dicen las props", () => {
     montar({ estado: "usada", fechaUso: USO_CERCA_DE_LA_MEDIANOCHE });
 
     expect(
-      screen.getByRole("heading", { level: 2, name: "Estado" }),
+      screen.getByRole("heading", { level: 2, name: "Ingreso" }),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Estado" }),
+    ).not.toBeInTheDocument();
     // El día y la hora son los de Colombia aunque el proceso corra en Tokio: ahí
     // ya sería el lunes 23 a las 12:30 p. m., y en UTC, el lunes 23 a las 3:30 a. m.
     expect(paresDelEstado()).toEqual(PARES_DEL_USO_CERCA_DE_LA_MEDIANOCHE);
