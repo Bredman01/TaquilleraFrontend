@@ -12,7 +12,7 @@ const ETIQUETA = "text-sm font-semibold text-zinc-950 dark:text-zinc-50";
 // mismo: `h-12` (48 px) ocupa el lugar de `min-h-11`, que con esa altura nunca
 // se aplicaría. La «Lista desplegable» usa las mismas clases.
 const DESPLEGABLE =
-  "h-12 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-base text-zinc-950 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-50 dark:focus-visible:outline-blue-400";
+  "h-12 w-full rounded-lg border border-zinc-500 bg-white px-3 py-2.5 text-base text-zinc-950 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600 dark:bg-zinc-900 dark:text-zinc-50 dark:focus-visible:outline-blue-400";
 
 // «Campo de fecha» de la guía: las del campo de texto y `dark:scheme-dark`, para
 // que el icono del calendario se vea en tema oscuro.

@@ -44,7 +44,7 @@ type Estado =
 // de `py-3` en el botón, porque la altura fija ya la da `h-12`.
 const ETIQUETA = "text-sm font-semibold text-zinc-950 dark:text-zinc-50";
 const CAMPO =
-  "h-12 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-base text-zinc-950 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-50 dark:focus-visible:outline-blue-400";
+  "h-12 w-full rounded-lg border border-zinc-500 bg-white px-3 py-2.5 text-base text-zinc-950 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600 dark:bg-zinc-900 dark:text-zinc-50 dark:focus-visible:outline-blue-400";
 const ERROR_DE_CAMPO = "text-sm text-red-700 dark:text-red-300";
 const MENSAJE_DE_ERROR =
   "rounded-xl border border-red-200 bg-red-50 p-6 text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200";
