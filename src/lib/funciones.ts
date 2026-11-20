@@ -179,7 +179,7 @@ export async function getFuncion(id: string): Promise<ResultadoFuncion> {
   } catch (error) {
     // Deja pasar las señales internas de Next (p. ej. el fin del prerender).
     unstable_rethrow(error);
-    console.error("No se pudo conectar con la API de eventos:", error);
+    console.error("No se pudo conectar con la API de funciones:", error);
     return { ok: false, motivo: "error" };
   }
 }
@@ -215,7 +215,7 @@ export async function getAsientos(
   } catch (error) {
     // Deja pasar las señales internas de Next (p. ej. el fin del prerender).
     unstable_rethrow(error);
-    console.error("No se pudo conectar con la API de eventos:", error);
+    console.error("No se pudo conectar con la API de funciones:", error);
     return { ok: false };
   }
 }

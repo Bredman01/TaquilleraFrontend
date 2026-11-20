@@ -23,8 +23,13 @@ const CLASES_ASIENTO =
   "disabled:cursor-not-allowed disabled:border-dashed disabled:line-through disabled:opacity-50";
 
 // «Botón principal» y, para el botón sin asientos, «Botón o control deshabilitado».
+// Lo común va aparte porque el `hover` cambia: el botón deshabilitado lleva
+// `enabled:hover:` y no cambia de fondo; el enlace, que no es un botón, lleva `hover:`.
 const CLASES_CONTINUAR =
-  "inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-zinc-950 px-5 py-3 text-base font-semibold text-white hover:bg-zinc-800 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-zinc-200 dark:focus-visible:outline-blue-400 sm:w-auto";
+  "inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-zinc-950 px-5 py-3 text-base font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600 dark:bg-zinc-50 dark:text-zinc-950 dark:focus-visible:outline-blue-400 sm:w-auto";
+const HOVER_CONTINUAR_BOTON =
+  "enabled:hover:bg-zinc-800 dark:enabled:hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-50";
+const HOVER_CONTINUAR_ENLACE = "hover:bg-zinc-800 dark:hover:bg-zinc-200";
 
 const MARCA_DE_ELEGIDO = (
   <svg
@@ -153,7 +158,7 @@ export default function MapaAsientos({
           <button
             type="button"
             disabled
-            className={`${CLASES_CONTINUAR} disabled:cursor-not-allowed disabled:opacity-50`}
+            className={`${CLASES_CONTINUAR} ${HOVER_CONTINUAR_BOTON}`}
           >
             Continuar
           </button>
@@ -161,7 +166,7 @@ export default function MapaAsientos({
           <Link
             href={rutaDeCompra(funcionId, seleccion)}
             prefetch={false}
-            className={CLASES_CONTINUAR}
+            className={`${CLASES_CONTINUAR} ${HOVER_CONTINUAR_ENLACE}`}
           >
             Continuar
           </Link>
