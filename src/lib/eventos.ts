@@ -1,5 +1,10 @@
 import { unstable_rethrow } from "next/navigation";
 import { cache } from "react";
+import { API_URL, ESPERA_MAXIMA_MS } from "@/lib/api";
+
+// `API_URL` vive en `lib/api.ts`; se vuelve a exportar para que sigan valiendo
+// los imports que ya la piden de aquí.
+export { API_URL };
 
 export type Categoria = "cine" | "teatro" | "concierto" | "charla";
 
@@ -55,12 +60,6 @@ export type ResultadoCiudades =
 export type ResultadoEvento =
   | { ok: true; evento: Evento }
   | { ok: false; motivo: "no-encontrado" | "error" };
-
-export const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
-
-/** Un backend que no responde en este tiempo se da por caído. */
-const ESPERA_MAXIMA_MS = 5000;
 
 /**
  * Entero positivo sin ceros a la izquierda: "1" y "42" sí; "0", "01", "1.5", "-1" y "abc" no.
