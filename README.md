@@ -27,6 +27,7 @@ Si el backend está en otra dirección, se indica con `NEXT_PUBLIC_API_URL` en `
 |---|---|
 | `/` | La cartelera, con filtros por categoría, ciudad y fecha (`/?categoria=teatro&ciudad=Neiva&fecha=2026-11-21`) |
 | `/eventos/{id}` | El detalle de un evento, con sus funciones agrupadas por día |
+| `/funciones/{id}` | Los datos de la función y el mapa de asientos, con la selección y el total |
 
 ## Comandos
 
@@ -81,3 +82,4 @@ El orden completo, los permisos de cada agente y lo que cambió respecto del dis
 | [001 · Detalle de película](https://github.com/AbilsonRivera/Taquillera-Arnes/blob/main/specs/001-detalle-pelicula/spec.md) | [#4](https://github.com/Bredman01/TaquilleraFrontend/pull/4) |
 | [002 · Eventos y filtros de la cartelera](https://github.com/AbilsonRivera/Taquillera-Arnes/blob/main/specs/002-eventos-y-filtros/spec.md) | [#5](https://github.com/Bredman01/TaquilleraFrontend/pull/5) |
 | [003 · Funciones por evento](https://github.com/AbilsonRivera/Taquillera-Arnes/blob/main/specs/003-funciones-por-evento/spec.md) | [#6](https://github.com/Bredman01/TaquilleraFrontend/pull/6) |
+| [004 · Mapa de asientos](https://github.com/AbilsonRivera/Taquillera-Arnes/blob/main/specs/004-mapa-de-asientos/spec.md) | [#7](https://github.com/Bredman01/TaquilleraFrontend/pull/7) |
