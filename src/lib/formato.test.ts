@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it, vi } from "vitest";
 import {
   diaEnColombia,
   formatDia,
@@ -10,10 +10,16 @@ import {
 // D5: las horas se formatean en Colombia sin importar la zona de quien ejecuta.
 // Para que un error de zona no pase en una máquina que está en Colombia, estas
 // pruebas corren con la zona del proceso en Tokio (14 h por delante).
-const zonaOriginal = process.env.TZ;
-
-beforeAll(() => {
+//
+// La zona se asigna con `vi.hoisted`, que Vitest ejecuta antes de evaluar los
+// `import`. No puede ir en `beforeAll`: `formato.ts` crea sus formateadores al
+// importarse, y uno sin `timeZone` toma entonces la zona del proceso. Asignada
+// después, esa zona sería la de la máquina y quitar `timeZone` no haría fallar
+// nada en Colombia.
+const zonaOriginal = vi.hoisted(() => {
+  const original = process.env.TZ;
   process.env.TZ = "Asia/Tokyo";
+  return original;
 });
 
 afterAll(() => {

@@ -75,6 +75,10 @@ const FECHAS_VALIDAS = [
   "2026-12-31",
   "2000-02-29", // divisible por 400: bisiesto
   "2028-02-29", // divisible por 4 y no por 100: bisiesto
+  // Solo febrero cambia en un año bisiesto: los demás meses conservan sus 30 o 31 días.
+  "2028-01-31", // enero de un bisiesto: 31 días
+  "2028-04-30", // abril de un bisiesto: 30 días
+  "2000-12-31", // diciembre de un bisiesto divisible por 400: 31 días
 ];
 
 const FECHAS_NO_VALIDAS = [

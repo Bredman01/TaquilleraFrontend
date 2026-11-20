@@ -1,6 +1,5 @@
 import {
   afterAll,
-  beforeAll,
   beforeEach,
   describe,
   expect,
@@ -20,10 +19,16 @@ import {
 // ejecuta. Estas pruebas corren con la zona del proceso en Tokio (14 h por
 // delante), para que un error de hora local no pase en una máquina que está en
 // Colombia.
-const zonaOriginal = process.env.TZ;
-
-beforeAll(() => {
+//
+// La zona se asigna con `vi.hoisted`, que Vitest ejecuta antes de evaluar los
+// `import`. No puede ir en `beforeAll`: `funciones.ts` importa `formato.ts`, que
+// crea sus formateadores al cargarse, y uno sin `timeZone` toma entonces la
+// zona del proceso. Asignada después, esa zona sería la de la máquina y quitar
+// `timeZone` no haría fallar nada en Colombia.
+const zonaOriginal = vi.hoisted(() => {
+  const original = process.env.TZ;
   process.env.TZ = "Asia/Tokyo";
+  return original;
 });
 
 afterAll(() => {
