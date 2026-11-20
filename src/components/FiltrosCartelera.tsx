@@ -8,17 +8,24 @@ interface FiltrosCarteleraProps {
 
 const ETIQUETA = "text-sm font-semibold text-zinc-950 dark:text-zinc-50";
 
+// «Campo de texto» de la guía visual, de al menos 44 px de alto (`min-h-11`).
+// La «Lista desplegable» usa las mismas clases.
 const DESPLEGABLE =
-  "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-base text-zinc-950 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-50 dark:focus-visible:outline-blue-400";
+  "min-h-11 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-base text-zinc-950 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-50 dark:focus-visible:outline-blue-400";
+
+// «Campo de fecha» de la guía: las del campo de texto y `dark:scheme-dark`, para
+// que el icono del calendario se vea en tema oscuro.
+const CAMPO_FECHA = `${DESPLEGABLE} dark:scheme-dark`;
 
 const BOTON_SECUNDARIO =
   "w-full rounded-lg border border-zinc-300 px-5 py-3 text-base font-semibold text-zinc-950 hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600 dark:border-zinc-600 dark:text-zinc-50 dark:hover:bg-zinc-800 dark:focus-visible:outline-blue-400 sm:w-auto";
 
 /**
- * Filtros de la cartelera: dos desplegables nativos y un botón «Filtrar».
- * Al enviarse, `Form` navega a `/?categoria=…&ciudad=…`; un valor vacío es
- * «Todas». Quien lo use debe darle una `key` armada con los filtros, porque
- * React no aplica un `defaultValue` nuevo a un `<select>` ya montado.
+ * Filtros de la cartelera: dos desplegables nativos, un campo de fecha nativo y
+ * un botón «Filtrar». Al enviarse, `Form` navega a
+ * `/?categoria=…&ciudad=…&fecha=…`; un valor vacío es «Todas». Quien lo use debe
+ * darle una `key` armada con los filtros, porque React no aplica un
+ * `defaultValue` nuevo a un campo ya montado.
  */
 export default function FiltrosCartelera({
   ciudades,
@@ -27,7 +34,7 @@ export default function FiltrosCartelera({
   return (
     <Form
       action="/"
-      className="flex flex-col gap-4 sm:flex-row sm:items-end"
+      className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end"
     >
       <div className="flex flex-col gap-1.5 sm:w-56">
         <label htmlFor="filtro-categoria" className={ETIQUETA}>
@@ -64,6 +71,18 @@ export default function FiltrosCartelera({
             </option>
           ))}
         </select>
+      </div>
+      <div className="flex flex-col gap-1.5 sm:w-56">
+        <label htmlFor="filtro-fecha" className={ETIQUETA}>
+          Fecha
+        </label>
+        <input
+          type="date"
+          id="filtro-fecha"
+          name="fecha"
+          defaultValue={filtros.fecha ?? ""}
+          className={CAMPO_FECHA}
+        />
       </div>
       <button type="submit" className={BOTON_SECUNDARIO}>
         Filtrar

@@ -25,13 +25,16 @@ export default function VistaCartelera({ resultado }: VistaCarteleraProps) {
   }
 
   const { eventos, ciudades, filtros } = resultado;
-  const hayFiltros = filtros.categoria !== undefined || filtros.ciudad !== undefined;
+  const hayFiltros =
+    filtros.categoria !== undefined ||
+    filtros.ciudad !== undefined ||
+    filtros.fecha !== undefined;
 
   return (
     <div className="flex flex-col gap-8">
-      {/* La key reinicia los desplegables cuando cambia la dirección. */}
+      {/* La key reinicia los campos cuando cambia la dirección. */}
       <FiltrosCartelera
-        key={`${filtros.categoria ?? ""}|${filtros.ciudad ?? ""}`}
+        key={`${filtros.categoria ?? ""}|${filtros.ciudad ?? ""}|${filtros.fecha ?? ""}`}
         ciudades={ciudades}
         filtros={filtros}
       />

@@ -25,12 +25,41 @@ function comparable(texto: string): string {
     .trim();
 }
 
+const FORMATO_FECHA = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+const DIAS_POR_MES = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+/** Calendario gregoriano: divisible por 4 y no por 100, o divisible por 400. */
+function esBisiesto(anio: number): boolean {
+  return (anio % 4 === 0 && anio % 100 !== 0) || anio % 400 === 0;
+}
+
+/**
+ * `AAAA-MM-DD` con un mes del 01 al 12 y un día del 01 al último de ese mes.
+ * Es la misma regla que aplica el backend, con aritmética y sin `Date` (que
+ * dependería de la zona horaria). No recorta espacios: « 2026-11-21» no vale.
+ */
+function esFechaValida(fecha: string): boolean {
+  const partes = FORMATO_FECHA.exec(fecha);
+  if (partes === null) return false;
+
+  const anio = Number(partes[1]);
+  const mes = Number(partes[2]);
+  const dia = Number(partes[3]);
+  if (mes < 1 || mes > 12) return false;
+
+  const ultimoDia = mes === 2 && esBisiesto(anio) ? 29 : DIAS_POR_MES[mes - 1];
+  return dia >= 1 && dia <= ultimoDia;
+}
+
 /**
  * Convierte los parámetros de la dirección en filtros que el backend acepta.
  *
  * - La categoría solo vale si es exactamente una de las cuatro.
  * - La ciudad solo vale si coincide con una de la lista, sin distinguir
  *   mayúsculas, tildes ni espacios; se usa su nombre canónico.
+ * - La fecha solo vale si es un texto `AAAA-MM-DD` de un día que existe; no
+ *   depende de los otros filtros.
  * - Todo lo demás es «Todas»: un valor desconocido, vacío o repetido (que llega
  *   como arreglo) no se envía nunca al backend, que respondería 400.
  */
@@ -49,6 +78,9 @@ export function leerFiltros(
     const ciudad = ciudades.find((canonica) => comparable(canonica) === buscada);
     if (ciudad) filtros.ciudad = ciudad;
   }
+
+  const fecha = parametros.fecha;
+  if (typeof fecha === "string" && esFechaValida(fecha)) filtros.fecha = fecha;
 
   return filtros;
 }
