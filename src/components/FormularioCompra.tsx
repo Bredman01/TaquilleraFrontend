@@ -56,7 +56,7 @@ const FOCO_DE_TECLADO =
 
 // «Botón principal» con «Botón o control deshabilitado».
 const BOTON_PAGAR =
-  "h-12 w-full rounded-lg bg-zinc-950 px-5 text-base font-semibold text-white enabled:hover:bg-zinc-800 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-950 dark:enabled:hover:bg-zinc-200 dark:focus-visible:outline-blue-400 sm:w-auto";
+  "h-12 w-full rounded-lg bg-zinc-950 px-5 text-base font-semibold text-white enabled:hover:bg-zinc-800 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-950 dark:enabled:hover:bg-zinc-200 dark:focus-visible:outline-blue-400";
 
 // «Botón principal» en un enlace: lleva `hover:` y no `enabled:hover:`.
 const ENLACE_COMO_BOTON =
