@@ -13,16 +13,18 @@ function propsDeLaRuta(id: string): Props {
   };
 }
 
-// Película 3 de los datos de ejemplo del backend (contrato del plan).
-const risasEnFamilia = {
-  id: 3,
-  titulo: "Risas en Familia",
-  sinopsis:
-    "Tres generaciones comparten una casa durante las vacaciones y nada sale como lo planearon.",
-  duracionMinutos: 95,
-  clasificacion: "TP",
-  genero: "Comedia",
-  imagenUrl: "https://placehold.co/400x600/png?text=Risas+en+Familia",
+// Evento 4 de los datos de ejemplo del backend (contrato del plan).
+const cartasAMedianoche = {
+  id: 4,
+  titulo: "Cartas a Medianoche",
+  descripcion:
+    "Una actriz retirada recibe cada noche una carta sin remitente.",
+  categoria: "teatro",
+  ciudad: "Neiva",
+  lugar: "Teatro Municipal de Neiva",
+  duracionMinutos: 90,
+  clasificacion: "+13",
+  imagenUrl: "https://placehold.co/400x600/png?text=Cartas+a+Medianoche",
 };
 
 let fetchMock: ReturnType<typeof vi.fn<typeof fetch>>;
@@ -35,19 +37,19 @@ beforeEach(() => {
   vi.spyOn(console, "error").mockImplementation(() => {});
 });
 
-describe("generateMetadata de /peliculas/[id]", () => {
+describe("generateMetadata de /eventos/[id]", () => {
   it("generateMetadata pone «{título} · Taquillera» como título de la pestaña", async () => {
     fetchMock.mockResolvedValueOnce(
-      new Response(JSON.stringify(risasEnFamilia), {
+      new Response(JSON.stringify(cartasAMedianoche), {
         status: 200,
         headers: { "Content-Type": "application/json" },
       }),
     );
 
-    const metadata = await generateMetadata(propsDeLaRuta("3"));
+    const metadata = await generateMetadata(propsDeLaRuta("4"));
 
     // El separador es «·» (U+00B7), el mismo del título del layout.
-    expect(metadata.title).toBe("Risas en Familia · Taquillera");
+    expect(metadata.title).toBe("Cartas a Medianoche · Taquillera");
   });
 
   it("generateMetadata no lanza cuando el backend no responde", async () => {
@@ -55,17 +57,17 @@ describe("generateMetadata de /peliculas/[id]", () => {
 
     const metadata = await generateMetadata(propsDeLaRuta("1"));
 
-    // Sin película no se define título: la pestaña hereda el del layout (P3).
+    // Sin evento no se define título: la pestaña hereda el del layout.
     expect(metadata.title).toBeUndefined();
   });
 
-  it("generateMetadata hereda el título del layout cuando la película no existe", async () => {
-    // P3 / D10: con un 404 la promesa se resuelve y no se define título.
+  it("generateMetadata hereda el título del layout cuando el evento no existe", async () => {
+    // Con un 404 la promesa se resuelve y no se define título.
     fetchMock.mockResolvedValueOnce(
       new Response(
         JSON.stringify({
           statusCode: 404,
-          message: "La película 9999 no existe",
+          message: "El evento 9999 no existe",
           error: "Not Found",
         }),
         { status: 404, headers: { "Content-Type": "application/json" } },
@@ -80,7 +82,7 @@ describe("generateMetadata de /peliculas/[id]", () => {
   });
 
   it("generateMetadata hereda el título del layout cuando el id no es un entero positivo", async () => {
-    // P3 / D3: un id inválido ni siquiera llega al backend y no define título.
+    // Un id inválido ni siquiera llega al backend y no define título.
     const metadata = await generateMetadata(propsDeLaRuta("abc"));
 
     expect(fetchMock).not.toHaveBeenCalled();

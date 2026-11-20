@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Taquillera · Cartelera y venta de boletas",
   description:
-    "Consulta las películas en cartelera y compra tus boletas en línea.",
+    "Consulta los eventos en cartelera y compra tus boletas en línea.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -10,7 +10,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # AGENTS.md — Taquillera Frontend
 
-Interfaz web del proyecto integrador **Cartelera y venta de boletas** (diplomado FET): muestra la cartelera y permite comprar boletas. No tiene base de datos propia: todos los datos vienen de la API `Taquillera-Backend` (NestJS, `http://localhost:3001`).
+Interfaz web del proyecto integrador **Cartelera y venta de boletas** (diplomado FET): muestra la cartelera de eventos pequeños (cine, teatro, conciertos y charlas) y permite comprar boletas. No tiene base de datos propia: todos los datos vienen de la API `Taquillera-Backend` (NestJS, `http://localhost:3001`).
 
 - **Stack:** Next.js 16 (App Router, Turbopack) · React 19 · TypeScript 5 (`strict`) · Tailwind CSS 4 · ESLint 9 (`eslint-config-next`) · Vitest 4 + Testing Library.
 
@@ -33,12 +33,14 @@ Variables de entorno: `NEXT_PUBLIC_API_URL` (URL del backend; si no existe, usar
 ## Lo que el agente no deduciría solo
 
 - `next.config.ts` activa **`cacheComponents`** y **`partialPrefetching`**. Con Cache Components, los datos dinámicos (un `fetch` sin caché, `cookies()`, `searchParams`) deben quedar dentro de un `<Suspense>` o en una función con `'use cache'`; si no, el overlay de desarrollo muestra el aviso **blocking-route** y la compilación puede fallar (ver `01-getting-started/08-caching.md`). Lee `node_modules/next/dist/docs/01-app/` antes de escribir carga de datos.
-- `layout.tsx` y las páginas reciben tipos globales generados por Next (`LayoutProps<"/">`, `PageProps<"/peliculas/[id]">`); en Next 16 `params` y `searchParams` son **Promises** y se usan con `await`.
+- `layout.tsx` y las páginas reciben tipos globales generados por Next (`LayoutProps<"/">`, `PageProps<"/eventos/[id]">`); en Next 16 `params` y `searchParams` son **Promises** y se usan con `await`.
 - Tailwind 4 se carga con `@import "tailwindcss"` en `globals.css` y el loader `@tailwindcss/turbopack`. No existe `tailwind.config.js`; los tokens de tema van en `@theme` dentro de `globals.css`.
 - Alias de importación: `@/*` apunta a `src/*`.
 - Las pruebas corren en jsdom y no montan Server Components asíncronos: `layout.tsx`, las páginas y `Cartelera.tsx` quedan fuera de la cobertura (`vitest.config.ts`) y se verifican en el navegador. La lógica va en funciones de `src/lib/` y en componentes síncronos, que sí se prueban.
 - `next build` también revisa los tipos de los archivos de prueba: una prueba que no coincide con el código rompe la compilación.
 - La skill `vercel-react-best-practices` (`.claude/skills/`) aplica al escribir o revisar componentes y carga de datos.
+- Los filtros de la cartelera viajan en la dirección (`/?categoria=teatro&ciudad=Neiva`) y se leen en el servidor con las funciones de `src/lib/cartelera.ts`. Un valor desconocido o repetido cuenta como «Todas»; el formulario es un `<form>` de tipo GET que funciona sin JavaScript.
+- El aspecto de las pantallas sale de la skill `guia-visual` del arnés: no se inventan colores, tamaños ni piezas nuevas sin agregarlas ahí.
 
 ## Organización del código
 
@@ -61,14 +63,14 @@ Usa Server Components por defecto. Agrega `'use client'` solo cuando el componen
 
 ## Convenciones
 
-- **Idioma:** la interfaz va en español. Rutas y tipos del dominio en español (`/peliculas`, `Pelicula`), igual que en el backend.
-- **Nombres:** componentes en PascalCase (`PeliculaCard.tsx`), utilidades en camelCase, carpetas de rutas en minúsculas con guiones.
+- **Idioma:** la interfaz va en español. Rutas y tipos del dominio en español (`/eventos`, `Evento`), igual que en el backend.
+- **Nombres:** componentes en PascalCase (`EventoCard.tsx`), utilidades en camelCase, carpetas de rutas en minúsculas con guiones.
 - **Estilo:** clases de Tailwind en el JSX; sin CSS por componente salvo que Tailwind no alcance. Soporta modo oscuro con las variantes `dark:` como la plantilla.
 - **Imágenes:** usa `next/image`; si se cargan de un dominio externo, ese dominio se agrega en `images.remotePatterns` de `next.config.ts` (y solo eso).
 - **Accesibilidad:** texto `alt` en imágenes, encabezados en orden, enlaces con texto que se entienda solo.
 - **Pruebas:** cada función nueva de `src/lib/` y cada componente nuevo trae su prueba, incluido el caso de error. Se busca por rol o por texto visible, y `fetch` se simula con `vi.fn()`: ninguna prueba llama al backend real.
 - **Ramas:** se trabaja en ramas desde `main` (`feat/...`, `fix/...`, `chore/...`) y se llega a `main` solo por pull request.
-- **Commits:** Conventional Commits en español: `feat: página de cartelera`, `fix: ...`, `chore: ...`, `docs: ...`.
+- **Commits:** Conventional Commits en español: `feat: cartelera de eventos`, `fix: ...`, `chore: ...`, `docs: ...`.
 
 ## Lo que el agente no debe hacer
 
