@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import ConsultarBoleta from "@/components/ConsultarBoleta";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -26,10 +27,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col bg-zinc-50 dark:bg-black">
         <header className="border-b border-black/[.08] bg-white dark:border-white/[.145] dark:bg-zinc-950">
-          <div className="mx-auto w-full max-w-6xl px-4 py-4 sm:px-6">
+          <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-end sm:justify-between sm:px-6">
             <span className="text-xl font-bold tracking-tight text-zinc-950 dark:text-zinc-50">
               Taquillera
             </span>
+            <ConsultarBoleta />
           </div>
         </header>
         {children}
