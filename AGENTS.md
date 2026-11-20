@@ -43,6 +43,9 @@ Variables de entorno: `NEXT_PUBLIC_API_URL` (URL del backend; si no existe, usar
 - El aspecto de las pantallas sale de la skill `guia-visual` del arnés: no se inventan colores, tamaños ni piezas nuevas sin agregarlas ahí.
 - **Un componente de cliente solo pinta y avisa.** `MapaAsientos` es el único con `'use client'`; la lógica de la selección (el tope de 6, el orden y la dirección de «Continuar») vive en `src/lib/mapa.ts`, sin `'use client'`, para que Vitest la pruebe sin navegador. Lo mismo vale para cualquier componente de cliente nuevo.
 - Al navegar, Next escribe la coma de `?asientos=A1,A2` como `%2C`. Las páginas leen `searchParams` ya decodificado.
+- **La dirección de la API y el tiempo máximo de espera viven en `src/lib/api.ts`**, que no importa nada del servidor: lo usan tanto las lecturas del servidor como el código que corre en el navegador.
+- **La compra se envía desde el navegador con `fetch`**, no con una Server Action. `FormularioCompra` solo pinta y avisa; la validación de los campos y el envío están en `src/lib/compras.ts`, cuya función `comprar` nunca lanza: devuelve la compra, la lista de asientos no disponibles o un error.
+- Las reglas del nombre y del correo están escritas dos veces, aquí y en el backend, con los mismos mensajes. Si cambia una, cambia la otra.
 - **Dinero, fechas y horas se formatean solo en `src/lib/formato.ts`** (`formatPrecio`, `formatDia`, `formatHora`, `diaEnColombia`), siempre en hora de Colombia (`America/Bogota`). Las pruebas fuerzan otra zona (`Asia/Tokyo`) antes de importar el código, con `vi.hoisted`. `Intl` escribe espacios no separables en «$ 15.000» y en «p. m.»: `formato.ts` los normaliza, y esa línea se escribe con los escapes `\u00A0\u202F`.
 
 ## Organización del código

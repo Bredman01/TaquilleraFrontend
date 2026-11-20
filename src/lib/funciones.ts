@@ -1,5 +1,6 @@
 import { unstable_rethrow } from "next/navigation";
-import { API_URL, ID_VALIDO } from "@/lib/eventos";
+import { API_URL, ESPERA_MAXIMA_MS } from "@/lib/api";
+import { ID_VALIDO } from "@/lib/eventos";
 import { diaEnColombia, formatDia } from "@/lib/formato";
 
 /**
@@ -57,9 +58,6 @@ export interface DiaDeFunciones {
   etiqueta: string;
   funciones: Funcion[];
 }
-
-/** Un backend que no responde en este tiempo se da por caído. */
-const ESPERA_MAXIMA_MS = 5000;
 
 /**
  * Los cuatro campos son obligatorios. Un `inicio` que `Date.parse` no entiende

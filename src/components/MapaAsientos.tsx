@@ -165,7 +165,6 @@ export default function MapaAsientos({
         ) : (
           <Link
             href={rutaDeCompra(funcionId, seleccion)}
-            prefetch={false}
             className={`${CLASES_CONTINUAR} ${HOVER_CONTINUAR_ENLACE}`}
           >
             Continuar
