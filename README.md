@@ -57,7 +57,7 @@ Un solo sistema de agentes coordina este repositorio y el del backend, porque ca
 
 ### Para qué usamos la skill `vercel-react-best-practices`
 
-El modelo no aplica por su cuenta los patrones de rendimiento de React y de Next: peticiones en cascada, componentes de cliente más grandes de lo necesario o datos sin `Suspense`. La skill es de terceros (Vercel): la revisamos buscando texto oculto y comandos de red, y su versión queda fijada en [`skills-lock.json`](skills-lock.json). La usa el desarrollador del frontend al escribir componentes y carga de datos.
+El modelo no aplica por su cuenta los patrones de rendimiento de React y de Next: peticiones en cascada, componentes de cliente más grandes de lo necesario o datos sin `Suspense`. La skill es de terceros (Vercel): revisamos su contenido y su versión queda fijada en [`skills-lock.json`](skills-lock.json). La usa el desarrollador del frontend al escribir componentes y carga de datos.
 
 El aspecto de las pantallas sale de otra skill, `guia-visual`, que vive en el arnés porque también la usa el agente que verifica la interfaz.
 
