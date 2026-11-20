@@ -29,8 +29,14 @@ export type ResultadoBoleta =
 /**
  * Un host, con su puerto si lo trae: un nombre o una IPv4, o una IPv6 entre
  * corchetes. No deja pasar `/`, `@`, espacios ni esquemas.
+ *
+ * El host, sin contar el puerto, admite como máximo 253 caracteres, el máximo de
+ * un nombre de dominio; entre corchetes el tope cuenta los corchetes (251 dentro).
+ * El QR no puede llevar más de unos 2300 caracteres: con un host más largo,
+ * `qr.make()` lanzaría «code length overflow» al pintarlo y la página daría error.
  */
-const HOST_VALIDO = /^(\[[0-9A-Fa-f:.]+\]|[A-Za-z0-9.-]+)(:\d{1,5})?$/;
+const HOST_VALIDO =
+  /^(\[[0-9A-Fa-f:.]{1,251}\]|[A-Za-z0-9.-]{1,253})(:\d{1,5})?$/;
 
 /** Lo que va antes de la primera coma de una cabecera con una lista, recortado. */
 function primerValor(cabecera: string | null): string | null {
@@ -46,11 +52,13 @@ function primerValor(cabecera: string | null): string | null {
  *
  * - Protocolo: el primer valor de `x-forwarded-proto` si es `http` o `https`; si
  *   no, `http`.
- * - Host: el primer valor de `x-forwarded-host` si cumple `HOST_VALIDO`; si no
- *   la cumple, `host` con la misma regla. Nunca se busca un segundo valor de la
+ * - Host: el primer valor de `x-forwarded-host` si cumple `HOST_VALIDO` (el
+ *   formato y el tope de 253 caracteres del nombre, sin el puerto); si no la
+ *   cumple, `host` con la misma regla. Nunca se busca un segundo valor de la
  *   lista: quien manda la cabecera podría poner ahí lo que quisiera.
  *
- * Si ningún host es válido, devuelve `null` y la página no dibuja el QR.
+ * Si ningún host es válido (por el formato o por el tope), devuelve `null` y la
+ * página no dibuja el QR.
  */
 export function origenDeLaPeticion(
   cabeceras: Pick<Headers, "get">,

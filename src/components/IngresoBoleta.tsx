@@ -38,7 +38,7 @@ const FOCO_DE_TECLADO =
 const ESTADO_VALIDA =
   "inline-block rounded-md border border-green-200 bg-green-50 px-2 py-0.5 text-sm font-semibold text-green-900 dark:border-green-900 dark:bg-green-950 dark:text-green-200";
 const ESTADO_USADA =
-  "rounded-md border border-zinc-300 px-2 py-0.5 text-sm font-semibold text-zinc-700 dark:border-zinc-600 dark:text-zinc-300";
+  "inline-block rounded-md border border-zinc-300 px-2 py-0.5 text-sm font-semibold text-zinc-700 dark:border-zinc-600 dark:text-zinc-300";
 
 // «Botón principal» con «Botón o control deshabilitado».
 const BOTON_VALIDAR =
@@ -103,7 +103,7 @@ export default function IngresoBoleta({
   return (
     <section aria-labelledby={`${id}-titulo`} className="flex w-full flex-col gap-4">
       <h2 id={`${id}-titulo`} className={TITULO_DE_SECCION}>
-        Estado
+        Ingreso
       </h2>
       <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2">
         <Dato
